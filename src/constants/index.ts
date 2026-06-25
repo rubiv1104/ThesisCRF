@@ -1,5 +1,8 @@
 export const APP_NAME = 'ThesisCRF'
 export const APP_VERSION = '1.0.0'
+export const DEPARTMENT_NAME = 'PG Department of Kayachikitsa'
+export const INSTITUTION_NAME = 'Ayurvedic & Unani Tibbia College and Hospital, New Delhi'
+export const UNIVERSITY_NAME = 'University of Delhi'
 
 export const VISIT_NAMES = ['Baseline', 'Day 15', 'Day 30', 'Day 45', 'Day 60', 'Day 75', 'Day 90'] as const
 

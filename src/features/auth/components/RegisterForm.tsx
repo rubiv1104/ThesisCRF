@@ -20,7 +20,11 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  role: 'admin' | 'investigator'
+}
+
+export function RegisterForm({ role }: RegisterFormProps) {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -40,7 +44,7 @@ export function RegisterForm() {
         email: values.email,
         password: values.password,
         options: {
-          data: { full_name: values.fullName },
+          data: { full_name: values.fullName, role },
         },
       })
 
@@ -63,6 +67,9 @@ export function RegisterForm() {
     const first = Object.values(errors)[0] as { message?: string } | undefined
     toast.error(first?.message ?? 'Please check the form fields.')
   }
+
+  const isAdmin = role === 'admin'
+  const accent = isAdmin ? 'text-purple-700' : 'text-blue-700'
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -166,10 +173,6 @@ export function RegisterForm() {
             )}
           />
 
-          <p className="rounded-lg bg-blue-50 px-4 py-3 text-xs text-blue-700">
-            Student investigator accounts are created here. Admin accounts (HOD / teachers) are set up by the system administrator.
-          </p>
-
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}
             {loading ? 'Creating account…' : 'Create account'}
@@ -177,7 +180,7 @@ export function RegisterForm() {
 
           <div className="text-center text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
+            <Link href="/login" className={`hover:underline font-medium ${accent}`}>
               Sign in
             </Link>
           </div>

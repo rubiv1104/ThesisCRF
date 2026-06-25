@@ -34,31 +34,41 @@ export function LoginForm() {
 
   async function onSubmit(values: LoginFormValues) {
     setLoading(true)
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    })
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      })
 
-    if (error) {
-      toast.error(error.message)
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+
+      // Route based on role — fall back to /dashboard if profile missing
+      let destination = '/dashboard'
+      try {
+        const { data: profileRaw } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((profileRaw as any)?.role === 'admin') destination = '/admin'
+      } catch {
+        // profile missing — default to /dashboard
+      }
+
+      router.push(destination)
+      router.refresh()
+    } catch (err) {
+      toast.error('Something went wrong. Please try again.')
+      console.error('Login error:', err)
+    } finally {
       setLoading(false)
-      return
     }
-
-    // Route based on role
-    const { data: profileRaw } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single()
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const profile = profileRaw as any
-    const destination = profile?.role === 'admin' ? '/admin' : '/dashboard'
-    router.push(destination)
-    router.refresh()
   }
 
   return (
@@ -138,18 +148,12 @@ export function LoginForm() {
             {loading ? 'Signing in…' : 'Sign in'}
           </Button>
 
-          <div className="flex items-center justify-between text-sm">
+          <div className="text-center text-sm">
             <Link
               href="/forgot-password"
               className="text-blue-600 hover:text-blue-700 hover:underline"
             >
               Forgot password?
-            </Link>
-            <Link
-              href="/register"
-              className="text-blue-600 hover:text-blue-700 hover:underline"
-            >
-              Register
             </Link>
           </div>
         </form>
