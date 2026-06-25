@@ -109,7 +109,6 @@ export function LoginForm() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
