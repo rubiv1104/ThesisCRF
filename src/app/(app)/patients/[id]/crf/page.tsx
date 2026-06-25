@@ -13,26 +13,35 @@ export default async function CrfPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: patientRaw } = await supabase
+  const { data: raw } = await supabase
     .from('patients')
-    .select('id, patient_name, study_patient_id, study_id')
+    .select('id, patient_name, study_patient_id, study_id, studies(study_code), research_groups(group_name)')
     .eq('id', id)
     .single()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const patient = patientRaw as any
+  const patient = raw as any
   if (!patient) notFound()
 
-  // Resolve study code — default to ECZ2026 for this batch
-  const studyCode = 'ECZ2026'
+  const studyCode: string = patient.studies?.study_code ?? 'ECZ2026'
+  const groupName: string = patient.research_groups?.group_name ?? ''
 
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-          {patient.study_patient_id}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            {patient.study_patient_id}
+          </p>
+          {groupName && (
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+              groupName === 'Group A' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'
+            }`}>
+              {groupName}
+            </span>
+          )}
+        </div>
         <h1 className="text-xl font-semibold text-slate-900">{patient.patient_name}</h1>
+        <p className="text-xs text-slate-400">{studyCode} CRF</p>
       </div>
       <CrfView patientId={id} studyCode={studyCode} />
     </div>
