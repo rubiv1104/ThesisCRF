@@ -33,30 +33,41 @@ export function RegisterForm() {
 
   async function onSubmit(values: RegisterFormValues) {
     setLoading(true)
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
 
-    const { error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: { full_name: values.fullName },
-      },
-    })
+      const { error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: { full_name: values.fullName },
+        },
+      })
 
-    if (error) {
-      toast.error(error.message)
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+
+      toast.success('Account created! You can now sign in.')
+      router.push('/login')
+    } catch (err) {
+      toast.error('Something went wrong. Please try again.')
+      console.error('Register error:', err)
+    } finally {
       setLoading(false)
-      return
     }
+  }
 
-    toast.success('Account created! You can now sign in.')
-    router.push('/login')
+  function onValidationError(errors: Record<string, unknown>) {
+    const first = Object.values(errors)[0] as { message?: string } | undefined
+    toast.error(first?.message ?? 'Please check the form fields.')
   }
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
+        <form onSubmit={form.handleSubmit(onSubmit, onValidationError)} className="flex flex-col gap-5">
           <FormField
             control={form.control}
             name="fullName"
