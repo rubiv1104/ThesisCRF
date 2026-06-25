@@ -47,10 +47,9 @@ export function TopNav({ onMenuClick }: TopNavProps) {
         </Button>
 
         <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Button variant="ghost" size="icon" aria-label="User menu">
-              <User size={18} />
-            </Button>
+          <DropdownMenuTrigger className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+            <User size={18} />
+            <span className="sr-only">User menu</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => router.push('/settings')}>
