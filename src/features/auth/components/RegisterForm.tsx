@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -8,11 +8,9 @@ import Link from 'next/link'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { loginSchema, type LoginFormValues } from '../validation'
+import { registerSchema, type RegisterFormValues } from '../validation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -22,23 +20,27 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 
-export function LoginForm() {
+export function RegisterForm() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '', rememberMe: false },
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' },
   })
 
-  async function onSubmit(values: LoginFormValues) {
+  async function onSubmit(values: RegisterFormValues) {
     setLoading(true)
     const supabase = createClient()
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
+      options: {
+        data: { full_name: values.fullName },
+      },
     })
 
     if (error) {
@@ -47,24 +49,33 @@ export function LoginForm() {
       return
     }
 
-    // Route based on role
-    const { data: profileRaw } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single()
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const profile = profileRaw as any
-    const destination = profile?.role === 'admin' ? '/admin' : '/dashboard'
-    router.push(destination)
-    router.refresh()
+    toast.success('Account created! You can now sign in.')
+    router.push('/login')
   }
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="Dr. Rubi Vishwakarma"
+                    autoComplete="name"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="email"
@@ -94,8 +105,8 @@ export function LoginForm() {
                   <div className="relative">
                     <Input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      autoComplete="current-password"
+                      placeholder="At least 8 characters"
+                      autoComplete="new-password"
                       className="pr-10"
                       {...field}
                     />
@@ -116,40 +127,47 @@ export function LoginForm() {
 
           <FormField
             control={form.control}
-            name="rememberMe"
+            name="confirmPassword"
             render={({ field }) => (
-              <FormItem className="flex items-center gap-2">
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    id="rememberMe"
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showConfirm ? 'text' : 'password'}
+                      placeholder="Repeat your password"
+                      autoComplete="new-password"
+                      className="pr-10"
+                      {...field}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                    >
+                      {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </FormControl>
-                <Label htmlFor="rememberMe" className="cursor-pointer text-sm font-normal">
-                  Remember me
-                </Label>
+                <FormMessage />
               </FormItem>
             )}
           />
 
+          <p className="rounded-lg bg-blue-50 px-4 py-3 text-xs text-blue-700">
+            Student investigator accounts are created here. Admin accounts (HOD / teachers) are set up by the system administrator.
+          </p>
+
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Creating account…' : 'Create account'}
           </Button>
 
-          <div className="flex items-center justify-between text-sm">
-            <Link
-              href="/forgot-password"
-              className="text-blue-600 hover:text-blue-700 hover:underline"
-            >
-              Forgot password?
-            </Link>
-            <Link
-              href="/register"
-              className="text-blue-600 hover:text-blue-700 hover:underline"
-            >
-              Register
+          <div className="text-center text-sm">
+            Already have an account?{' '}
+            <Link href="/login" className="text-blue-600 hover:text-blue-700 hover:underline">
+              Sign in
             </Link>
           </div>
         </form>

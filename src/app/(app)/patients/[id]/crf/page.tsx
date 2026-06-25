@@ -13,12 +13,14 @@ export default async function CrfPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: patient } = await supabase
+  const { data: patientRaw } = await supabase
     .from('patients')
     .select('id, patient_name, study_patient_id, study_id')
     .eq('id', id)
     .single()
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const patient = patientRaw as any
   if (!patient) notFound()
 
   // Resolve study code — default to ECZ2026 for this batch

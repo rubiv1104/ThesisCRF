@@ -24,7 +24,7 @@ export function CrfSectionAccordion({
   completedSections,
 }: CrfSectionAccordionProps) {
   return (
-    <Accordion type="single" collapsible className="w-full space-y-2">
+    <Accordion className="w-full space-y-2">
       {sections.map((section) => {
         const done = completedSections.has(section.key)
         return (

@@ -140,7 +140,7 @@ export function CrfFieldRenderer({ field, value, onChange, allValues }: CrfField
       )}
 
       {field.type === 'select' && (
-        <Select value={value} onValueChange={(v) => onChange(field.key, v)}>
+        <Select value={value ?? ''} onValueChange={(v) => onChange(field.key, v ?? '')}>
           <SelectTrigger id={field.key} className="max-w-xs">
             <SelectValue placeholder="Select…" />
           </SelectTrigger>

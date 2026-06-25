@@ -26,7 +26,8 @@ export function CrfView({ patientId, studyCode }: CrfViewProps) {
   const [values, setValues] = useState<Record<string, string>>({})
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
 
   const template = studyCode === 'ECZ2026' ? ECZ2026_TEMPLATE : null
 
@@ -83,14 +84,16 @@ export function CrfView({ patientId, studyCode }: CrfViewProps) {
           .from('crf_sections')
           .insert(toInsert)
           .select('id, section_name, completed, locked')
-        sectionMeta = (created ?? []).map((r) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sectionMeta = (created ?? []).map((r: any) => ({
           id: r.id,
           section_key: r.section_name,
           completed: r.completed,
           locked: r.locked,
         }))
       } else {
-        sectionMeta = existingSections.map((r) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sectionMeta = existingSections.map((r: any) => ({
           id: r.id,
           section_key: r.section_name,
           completed: r.completed,

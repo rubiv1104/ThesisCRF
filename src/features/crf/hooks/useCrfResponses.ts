@@ -15,7 +15,8 @@ export function useCrfResponses({ sectionId, visitNumber = 0 }: UseCrfResponsesO
   const [values, setValues] = useState<Record<string, string>>({})
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
 
   // Load existing responses when sectionId is known
   useEffect(() => {
