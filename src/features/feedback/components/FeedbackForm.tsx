@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Loader2, Send } from 'lucide-react'
+import { Loader2, Send, Paperclip, X, FileText } from 'lucide-react'
 
 interface Props {
   userId: string
@@ -20,13 +19,34 @@ const CATEGORIES = [
   { value: 'general', label: 'General Feedback' },
 ]
 
+const ACCEPTED = '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+const MAX_MB = 10
+
 export function FeedbackForm({ userId, fullName, email, studyCode }: Props) {
   const [category, setCategory] = useState('scale_request')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] ?? null
+    if (!f) { setFile(null); return }
+    if (f.size > MAX_MB * 1024 * 1024) {
+      toast.error(`File too large — max ${MAX_MB} MB`)
+      e.target.value = ''
+      return
+    }
+    setFile(f)
+  }
+
+  function removeFile() {
+    setFile(null)
+    if (fileRef.current) fileRef.current.value = ''
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,6 +56,28 @@ export function FeedbackForm({ userId, fullName, email, studyCode }: Props) {
     }
 
     setSubmitting(true)
+    let attachmentUrl: string | null = null
+
+    // Upload file if attached
+    if (file) {
+      const ext = file.name.split('.').pop() ?? 'bin'
+      const path = `${userId}/${Date.now()}.${ext}`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('feedback-attachments')
+        .upload(path, file, { cacheControl: '3600', upsert: false })
+
+      if (uploadError) {
+        toast.error('File upload failed: ' + uploadError.message)
+        setSubmitting(false)
+        return
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('feedback-attachments')
+        .getPublicUrl(uploadData.path)
+      attachmentUrl = urlData?.publicUrl ?? null
+    }
+
     const { error } = await supabase.from('feedbacks').insert({
       submitted_by: userId,
       full_name: fullName,
@@ -45,6 +87,7 @@ export function FeedbackForm({ userId, fullName, email, studyCode }: Props) {
       subject: subject.trim(),
       message: message.trim(),
       status: 'open',
+      attachment_url: attachmentUrl,
     })
     setSubmitting(false)
 
@@ -55,6 +98,7 @@ export function FeedbackForm({ userId, fullName, email, studyCode }: Props) {
       setSubject('')
       setMessage('')
       setCategory('scale_request')
+      removeFile()
     }
   }
 
@@ -117,12 +161,45 @@ export function FeedbackForm({ userId, fullName, email, studyCode }: Props) {
         <p className="text-right text-xs text-slate-400">{message.length}/2000</p>
       </div>
 
-      <Button type="submit" disabled={submitting}>
+      {/* File attachment */}
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-slate-600">
+          Attachment <span className="text-slate-400 font-normal">(optional — PDF or Word, max {MAX_MB} MB)</span>
+        </label>
+        {file ? (
+          <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5">
+            <FileText size={16} className="shrink-0 text-blue-600" />
+            <span className="flex-1 truncate text-sm text-blue-800">{file.name}</span>
+            <span className="text-xs text-blue-500">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+            <button type="button" onClick={removeFile} className="text-blue-400 hover:text-red-500 transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-3 text-sm text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-colors">
+            <Paperclip size={15} />
+            <span>Click to attach a PDF or Word document</span>
+            <input
+              ref={fileRef}
+              type="file"
+              accept={ACCEPTED}
+              onChange={handleFile}
+              className="hidden"
+            />
+          </label>
+        )}
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
+      >
         {submitting
-          ? <><Loader2 size={15} className="mr-2 animate-spin" /> Submitting…</>
-          : <><Send size={15} className="mr-2" /> Submit Request</>
+          ? <><Loader2 size={15} className="animate-spin" /> {file ? 'Uploading & Submitting…' : 'Submitting…'}</>
+          : <><Send size={15} /> Submit Request</>
         }
-      </Button>
+      </button>
     </form>
   )
 }

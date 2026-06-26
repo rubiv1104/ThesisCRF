@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { CRF_REGISTRY } from '../registry'
@@ -260,13 +260,39 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
     return () => { cancelled = true }
   }, [patientId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pending changes queue — accumulates field updates and flushes as a single batch upsert
+  type PendingRow = { section_id: string; field_key: string; field_label: string; field_type: string; response: string; visit_number: number }
+  const pendingRef = useRef<Record<string, PendingRow>>({})
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flushPending = useCallback(async () => {
+    const batch = { ...pendingRef.current }
+    if (Object.keys(batch).length === 0) return
+    pendingRef.current = {}
+    setSaveStatus('saving')
+    const { error } = await supabase
+      .from('crf_responses')
+      .upsert(Object.values(batch), { onConflict: 'section_id,field_key,visit_number' })
+    if (error) {
+      // Re-queue failed batch so user can retry with Save button
+      pendingRef.current = { ...batch, ...pendingRef.current }
+      setSaveStatus('unsaved')
+      toast.error('Save failed — click Save to retry')
+    } else {
+      setSaveStatus('saved')
+    }
+  }, [supabase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Flush any remaining changes when component unmounts
+  useEffect(() => () => { flushPending() }, [flushPending])
+
   const onChange = useCallback(
-    async (key: string, value: string) => {
+    (key: string, value: string) => {
       if (readOnly) return
       setValues((prev) => ({ ...prev, [key]: value }))
       setSaveStatus('unsaved')
 
-      // Persist to localStorage for future patient suggestions (skip calculated/grid cells with __)
+      // Persist to localStorage for future patient suggestions (skip grid cells with __)
       if (value && !key.includes('__')) {
         try {
           const stored = JSON.parse(localStorage.getItem(LS_KEY) ?? '{}')
@@ -276,47 +302,32 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
 
       // Find which section owns this field key
       if (!template || sections.length === 0) return
-
-      let ownerSectionId: string | null = null
+      let sectionId: string | null = null
       let fieldLabel = key
       let fieldType = 'text'
-
       for (const sectionDef of template.sections) {
         for (const field of sectionDef.fields) {
-          // handle assessment_grid cell keys: fieldKey__row__col
           const isGridCell = key.startsWith(field.key + '__')
           if (field.key === key || isGridCell) {
             const meta = sections.find((s) => s.section_key === sectionDef.key)
             if (meta) {
-              ownerSectionId = meta.id
+              sectionId = meta.id
               fieldLabel = isGridCell ? key : field.label
               fieldType = isGridCell ? 'number' : field.type
             }
             break
           }
         }
-        if (ownerSectionId) break
+        if (sectionId) break
       }
+      if (!sectionId) return
 
-      if (!ownerSectionId) return
-
-      setSaveStatus('saving')
-      const { error } = await supabase.from('crf_responses').upsert(
-        {
-          section_id: ownerSectionId,
-          field_key: key,
-          field_label: fieldLabel,
-          field_type: fieldType,
-          response: value,
-          visit_number: 0,
-        },
-        { onConflict: 'section_id,field_key,visit_number' }
-      )
-
-      setSaveStatus(error ? 'unsaved' : 'saved')
-      if (error) toast.error('Save failed: ' + error.message)
+      // Queue the change — will be flushed as a batch after 1.5 s of inactivity
+      pendingRef.current[key] = { section_id: sectionId, field_key: key, field_label: fieldLabel, field_type: fieldType, response: value, visit_number: 0 }
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(() => { flushPending() }, 1500)
     },
-    [template, sections] // eslint-disable-line react-hooks/exhaustive-deps
+    [template, sections, flushPending] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   // Visit-based filtering — must be before any early returns (Rules of Hooks)
@@ -349,7 +360,19 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
             {template.study_code} v{template.version} · {readOnly ? 'Read-only' : 'Select a visit below, then expand sections'}
           </p>
         </div>
-        {!readOnly && <SaveIndicator status={saveStatus} />}
+        {!readOnly && (
+          <div className="flex items-center gap-2">
+            <SaveIndicator status={saveStatus} />
+            {saveStatus === 'unsaved' && (
+              <button
+                onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); flushPending() }}
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                Save
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Visit selector — ECZ2026 gets day-specific tabs; other studies show their actual schedule */}

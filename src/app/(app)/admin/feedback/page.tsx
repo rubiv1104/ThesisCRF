@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
 import { FeedbackStatusForm } from '@/features/feedback/components/FeedbackStatusForm'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Paperclip } from 'lucide-react'
 
 export const metadata = { title: `Feedback Inbox | ${APP_NAME}` }
 
@@ -93,6 +93,17 @@ export default async function FeedbackInboxPage() {
                     {fb.email ? ` (${fb.email})` : ''}
                     {' · '}{new Date(fb.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                   </p>
+                  {fb.attachment_url && (
+                    <a
+                      href={fb.attachment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                    >
+                      <Paperclip size={12} />
+                      View Attachment
+                    </a>
+                  )}
                 </div>
               </div>
 
