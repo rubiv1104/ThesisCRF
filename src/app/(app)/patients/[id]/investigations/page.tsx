@@ -17,14 +17,19 @@ export default async function PatientInvestigationsPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: raw } = await supabase
-    .from('patients')
-    .select('id, patient_name, study_patient_id, studies(study_code)')
-    .eq('id', id)
-    .single()
+  const [{ data: viewerProfile }, { data: raw }] = await Promise.all([
+    supabase.from('user_profiles').select('role').eq('id', user.id).single(),
+    supabase.from('patients')
+      .select('id, patient_name, study_patient_id, studies(study_code)')
+      .eq('id', id)
+      .single(),
+  ])
 
   const patient = raw as { id: string; patient_name: string; study_patient_id: string; studies: { study_code: string } | null } | null
   if (!patient) notFound()
+
+  const viewerRole = (viewerProfile as { role?: string } | null)?.role ?? 'investigator'
+  const isReadOnly = viewerRole === 'admin' || viewerRole === 'teacher'
 
   return (
     <div className="space-y-4">
@@ -54,7 +59,7 @@ export default async function PatientInvestigationsPage({ params }: PageProps) {
         </Link>
       </div>
 
-      <InvestigationUpload patientId={id} patientName={patient.patient_name} />
+      <InvestigationUpload patientId={id} patientName={patient.patient_name} readOnly={isReadOnly} />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { CrfView } from '@/features/crf/components/CrfView'
 import { CrfStatusBanner } from '@/features/crf/components/CrfStatusBanner'
 import { InvestigationUpload } from '@/features/investigations/components/InvestigationUpload'
 import { APP_NAME } from '@/constants'
+import { Printer, FileDown } from 'lucide-react'
 
 export const metadata = { title: `CRF | ${APP_NAME}` }
 
@@ -76,6 +77,24 @@ export default async function CrfPage({ params }: PageProps) {
           <h1 className="mt-1 text-xl font-semibold text-slate-900">{patient.patient_name}</h1>
           <p className="text-xs text-slate-400">{studyCode} — Case Report Form</p>
         </div>
+
+        {/* Export actions */}
+        <div className="flex shrink-0 items-center gap-2">
+          <a
+            href={`/print/crf/${id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            <Printer size={14} /> Print / PDF
+          </a>
+          <a
+            href={`/api/crf/${id}/docx`}
+            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+          >
+            <FileDown size={14} /> Word
+          </a>
+        </div>
       </div>
 
       {/* Status banner — guide feedback + submit button (investigators only) */}
@@ -114,7 +133,7 @@ export default async function CrfPage({ params }: PageProps) {
             Full page view →
           </Link>
         </div>
-        <InvestigationUpload patientId={id} patientName={patient.patient_name} />
+        <InvestigationUpload patientId={id} patientName={patient.patient_name} readOnly={isReadOnly} />
       </div>
     </div>
   )

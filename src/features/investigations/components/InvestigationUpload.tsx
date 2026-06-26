@@ -19,6 +19,8 @@ interface Doc {
 interface InvestigationUploadProps {
   patientId: string
   patientName: string
+  /** When true, hides upload form and delete buttons (guide / admin view) */
+  readOnly?: boolean
 }
 
 const VISIT_OPTIONS = [
@@ -38,7 +40,7 @@ function fmtSize(bytes: number | null) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
-export function InvestigationUpload({ patientId, patientName }: InvestigationUploadProps) {
+export function InvestigationUpload({ patientId, patientName, readOnly = false }: InvestigationUploadProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
   const fileRef = useRef<HTMLInputElement>(null)
@@ -131,7 +133,8 @@ export function InvestigationUpload({ patientId, patientName }: InvestigationUpl
 
   return (
     <div className="space-y-5">
-      {/* Upload form */}
+      {/* Upload form — hidden for guides / admin (read-only view) */}
+      {!readOnly && (
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
         <h3 className="text-sm font-semibold text-slate-800">Upload Investigation Report</h3>
 
@@ -187,6 +190,7 @@ export function InvestigationUpload({ patientId, patientName }: InvestigationUpl
           </div>
         )}
       </div>
+      )}
 
       {/* Document list */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -226,15 +230,17 @@ export function InvestigationUpload({ patientId, patientName }: InvestigationUpl
                 >
                   <Download size={15} />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(doc)}
-                  title="Delete"
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 size={15} />
-                </Button>
+                {!readOnly && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(doc)}
+                    title="Delete"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 size={15} />
+                  </Button>
+                )}
               </li>
             ))}
           </ul>
