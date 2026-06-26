@@ -1,13 +1,13 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { registerAction } from '@/app/(auth)/register/actions'
 import { registerSchema, type RegisterFormValues } from '../validation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,61 +20,77 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 
-interface RegisterFormProps {
-  role: 'admin' | 'investigator'
+interface Study {
+  id: string
+  study_code: string
+  study_title: string
 }
 
-export function RegisterForm({ role }: RegisterFormProps) {
+interface RegisterFormProps {
+  role: 'admin' | 'teacher' | 'investigator'
+  studies?: Study[]
+}
+
+export function RegisterForm({ role, studies = [] }: RegisterFormProps) {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' },
+    defaultValues: { fullName: '', email: '', password: '', confirmPassword: '', studyCode: '' },
   })
 
   async function onSubmit(values: RegisterFormValues) {
+    setServerError(null)
     setLoading(true)
-    try {
-      const supabase = createClient()
 
-      const { error } = await supabase.auth.signUp({
+    try {
+      const result = await registerAction({
+        fullName: values.fullName,
         email: values.email,
         password: values.password,
-        options: {
-          data: { full_name: values.fullName, role },
-        },
+        studyCode: values.studyCode || undefined,
+        role,
       })
 
-      if (error) {
-        toast.error(error.message)
+      if ('error' in result) {
+        if (result.error.toLowerCase().includes('study')) {
+          form.setError('studyCode', { message: result.error })
+        } else if (result.error.toLowerCase().includes('email')) {
+          form.setError('email', { message: result.error })
+        } else {
+          setServerError(result.error)
+        }
         return
       }
 
-      toast.success('Account created! You can now sign in.')
+      toast.success('Account created! Please sign in.')
       router.push('/login')
-    } catch (err) {
-      toast.error('Something went wrong. Please try again.')
-      console.error('Register error:', err)
+    } catch {
+      setServerError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  function onValidationError(errors: Record<string, unknown>) {
-    const first = Object.values(errors)[0] as { message?: string } | undefined
-    toast.error(first?.message ?? 'Please check the form fields.')
-  }
-
-  const isAdmin = role === 'admin'
-  const accent = isAdmin ? 'text-purple-700' : 'text-blue-700'
+  const isInvestigator = role === 'investigator'
+  const accent = role === 'admin' ? 'text-purple-700' : role === 'teacher' ? 'text-green-700' : 'text-blue-700'
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onValidationError)} className="flex flex-col gap-5">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
+
+          {serverError && (
+            <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              {serverError}
+            </div>
+          )}
+
           <FormField
             control={form.control}
             name="fullName"
@@ -84,7 +100,7 @@ export function RegisterForm({ role }: RegisterFormProps) {
                 <FormControl>
                   <Input
                     type="text"
-                    placeholder="Dr. Rubi Vishwakarma"
+                    placeholder={role === 'investigator' ? 'Your full name' : 'Dr. Full Name'}
                     autoComplete="name"
                     {...field}
                   />
@@ -112,6 +128,36 @@ export function RegisterForm({ role }: RegisterFormProps) {
               </FormItem>
             )}
           />
+
+          {isInvestigator && (
+            <FormField
+              control={form.control}
+              name="studyCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Your Study / Research Topic <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <select
+                      id="studyCode"
+                      className="flex h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 disabled:opacity-50"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    >
+                      <option value="">— Select your study / research topic —</option>
+                      {studies.map((s) => (
+                        <option key={s.id} value={s.study_code}>
+                          {s.study_code} — {s.study_title}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -174,7 +220,7 @@ export function RegisterForm({ role }: RegisterFormProps) {
           />
 
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}
+            {loading && <Loader2 size={16} className="mr-2 animate-spin" />}
             {loading ? 'Creating account…' : 'Create account'}
           </Button>
 

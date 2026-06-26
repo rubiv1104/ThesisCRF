@@ -2,42 +2,100 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard,
-  BookOpen,
   Users,
-  FileText,
   FlaskConical,
   Download,
-  ShieldCheck,
   Settings,
-  X,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  MessageSquarePlus,
+  Inbox,
+  Scale,
+  GraduationCap,
+  BookOpenCheck,
+  TableProperties,
 } from 'lucide-react'
 import { cn } from '@/utils'
 import { APP_NAME } from '@/constants'
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Studies', href: '/studies', icon: BookOpen },
-  { label: 'Patients', href: '/patients', icon: Users },
-  { label: 'CRF', href: '/patients', icon: FileText },
-  { label: 'Investigations', href: '/patients', icon: FlaskConical },
-  { label: 'Export', href: '/export', icon: Download },
-  { label: 'Admin', href: '/admin', icon: ShieldCheck },
+const INVESTIGATOR_NAV = [
+  { label: 'My Patients', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Master Chart', href: '/master-chart', icon: TableProperties },
+  { label: 'Investigations', href: '/investigations', icon: FlaskConical },
+  { label: 'Assessments & Scales', href: '/assessments', icon: Scale },
+  { label: 'Feedback & Requests', href: '/feedback', icon: MessageSquarePlus },
   { label: 'Settings', href: '/settings', icon: Settings },
-] as const
+]
+
+const TEACHER_NAV = [
+  { label: 'My Students\' CRFs', href: '/teacher', icon: GraduationCap },
+  { label: 'CRF Review', href: '/teacher/review', icon: BookOpenCheck },
+  { label: 'Master Chart', href: '/master-chart', icon: TableProperties },
+  { label: 'Assessments & Scales', href: '/assessments', icon: Scale },
+  { label: 'Settings', href: '/settings', icon: Settings },
+]
+
+const ADMIN_NAV = [
+  { label: 'Overview', href: '/admin', icon: LayoutDashboard },
+  { label: 'All Patients & CRFs', href: '/admin/patients', icon: ClipboardList },
+  { label: 'User Management', href: '/admin/users', icon: Users },
+  { label: 'Assessments & Scales', href: '/assessments', icon: Scale },
+  { label: 'Feedback Inbox', href: '/admin/feedback', icon: Inbox },
+  { label: 'Export', href: '/export', icon: Download },
+  { label: 'Settings', href: '/settings', icon: Settings },
+]
+
+const ROLE_CONFIG = {
+  admin: {
+    nav: ADMIN_NAV,
+    label: 'Administrator',
+    color: 'text-purple-700',
+    badge: 'bg-purple-50 text-purple-700',
+  },
+  teacher: {
+    nav: TEACHER_NAV,
+    label: 'Guide',
+    color: 'text-green-700',
+    badge: 'bg-green-50 text-green-700',
+  },
+  investigator: {
+    nav: INVESTIGATOR_NAV,
+    label: 'Investigator',
+    color: 'text-blue-700',
+    badge: 'bg-blue-50 text-blue-700',
+  },
+}
 
 interface SidebarProps {
   open: boolean
   onClose: () => void
+  role?: 'admin' | 'teacher' | 'investigator'
 }
 
-export function Sidebar({ open, onClose }: SidebarProps) {
+export function Sidebar({ open, onClose, role = 'investigator' }: SidebarProps) {
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-collapsed')
+    if (saved !== null) setCollapsed(saved === 'true')
+  }, [])
+
+  function toggleCollapse() {
+    setCollapsed((v) => {
+      localStorage.setItem('sidebar-collapsed', String(!v))
+      return !v
+    })
+  }
+
+  const config = ROLE_CONFIG[role]
 
   return (
     <>
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-20 bg-black/30 lg:hidden"
@@ -48,49 +106,79 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 flex w-16 flex-col border-r border-slate-200 bg-white transition-all duration-200 hover:w-56 lg:static lg:z-auto',
-          open ? 'w-56' : 'w-16'
+          'fixed inset-y-0 left-0 z-30 flex flex-col border-r border-slate-200 bg-white transition-all duration-200 lg:static lg:z-auto',
+          open ? 'w-60' : 'w-0 overflow-hidden lg:overflow-visible',
+          collapsed ? 'lg:w-16' : 'lg:w-60'
         )}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center border-b border-slate-200 px-4">
-          <span className="text-lg font-bold text-blue-600">T</span>
-          <span className="ml-2 overflow-hidden whitespace-nowrap text-sm font-semibold text-slate-800 opacity-0 transition-opacity group-hover:opacity-100">
-            {APP_NAME}
-          </span>
+        {/* Logo + collapse toggle */}
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-3">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-600 text-xs font-bold text-white">
+              T
+            </span>
+            {!collapsed && (
+              <span className="truncate text-sm font-semibold text-slate-800 leading-tight">
+                {APP_NAME}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={toggleCollapse}
+            className="hidden shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:flex"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
         </div>
 
-        {/* Close button (mobile) */}
-        <button
-          onClick={onClose}
-          className="absolute right-2 top-4 p-1 text-slate-400 hover:text-slate-600 lg:hidden"
-          aria-label="Close sidebar"
-        >
-          <X size={18} />
-        </button>
+        {/* Role badge */}
+        {!collapsed && (
+          <div className="mx-3 mt-3 rounded-md bg-slate-50 px-3 py-2">
+            <p className="text-xs text-slate-400">Signed in as</p>
+            <p className={cn('text-xs font-semibold', config.color)}>
+              {config.label}
+            </p>
+          </div>
+        )}
 
         {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto py-4">
-          {NAV_ITEMS.map((item) => {
+        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto py-3 px-2">
+          {config.nav.map((item) => {
             const Icon = item.icon
-            const active = pathname.startsWith(item.href)
+            const active =
+              pathname === item.href ||
+              (item.href !== '/admin' && item.href !== '/teacher' && pathname.startsWith(item.href + '/'))
             return (
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={onClose}
+                title={collapsed ? item.label : undefined}
                 className={cn(
-                  'group flex items-center gap-3 rounded-lg mx-2 px-3 py-2.5 text-sm font-medium transition-colors',
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  collapsed ? 'justify-center px-0' : '',
                   active
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 )}
               >
                 <Icon size={18} className="shrink-0" />
-                <span className="overflow-hidden whitespace-nowrap">{item.label}</span>
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </Link>
             )
           })}
         </nav>
+
+        {/* Footer */}
+        {!collapsed && (
+          <div className="border-t border-slate-100 px-4 py-3">
+            <p className="text-xs text-slate-400 leading-tight">
+              ThesisCRF v1.0<br />
+              PG Dept. Kayachikitsa
+            </p>
+          </div>
+        )}
       </aside>
     </>
   )

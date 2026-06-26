@@ -25,22 +25,22 @@ export default function LoginPage() {
       {/* Register section */}
       <div className="mt-6">
         <p className="mb-3 text-center text-xs font-medium uppercase tracking-wide text-slate-400">New here? Create an account</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <Link
-            href="/register?role=admin"
-            className="flex flex-col items-center gap-1 rounded-xl border-2 border-purple-200 bg-purple-50 px-4 py-3 text-center transition hover:border-purple-400 hover:bg-purple-100"
+            href="/register?role=teacher"
+            className="flex flex-col items-center gap-1 rounded-xl border-2 border-green-200 bg-green-50 px-3 py-3 text-center transition hover:border-green-400 hover:bg-green-100"
           >
             <span className="text-lg">👩‍🏫</span>
-            <span className="text-xs font-semibold text-purple-800">Admin Account</span>
-            <span className="text-[11px] text-purple-600">For Teachers &amp; HOD</span>
+            <span className="text-xs font-semibold text-green-800">Guide</span>
+            <span className="text-[10px] text-green-600">Faculty / HOD</span>
           </Link>
           <Link
             href="/register?role=investigator"
-            className="flex flex-col items-center gap-1 rounded-xl border-2 border-blue-200 bg-blue-50 px-4 py-3 text-center transition hover:border-blue-400 hover:bg-blue-100"
+            className="flex flex-col items-center gap-1 rounded-xl border-2 border-blue-200 bg-blue-50 px-3 py-3 text-center transition hover:border-blue-400 hover:bg-blue-100"
           >
             <span className="text-lg">🎓</span>
-            <span className="text-xs font-semibold text-blue-800">Investigator Account</span>
-            <span className="text-[11px] text-blue-600">For PG Students</span>
+            <span className="text-xs font-semibold text-blue-800">Investigator</span>
+            <span className="text-[10px] text-blue-600">PG Students</span>
           </Link>
         </div>
       </div>

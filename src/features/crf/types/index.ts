@@ -11,6 +11,7 @@ export type FieldType =
   | 'divider'
   | 'investigation_table'
   | 'assessment_grid'
+  | 'calculated'
 
 export interface FieldOption {
   value: string
@@ -33,6 +34,14 @@ export interface CrfField {
   rows?: string[]
   /** helper text shown below the field */
   hint?: string
+  /** pre-filled value applied automatically when the field has no saved response */
+  defaultValue?: string
+  /** for type='calculated': list of field keys to sum */
+  sumKeys?: string[]
+  /** for type='calculated': named formula to apply ('easi_bt' | 'easi_at') */
+  formulaId?: string
+  /** for formulaId='date_plus_days': number of days to add to date_induction */
+  formulaDays?: number
 }
 
 export interface CrfSectionDef {

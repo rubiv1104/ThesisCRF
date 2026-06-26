@@ -2,7 +2,7 @@ import type { CrfTemplateDef } from '../types'
 
 export const ECZ2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'ECZ2026',
-  version: '1.0',
+  version: '1.2',
   sections: [
     // ─────────────────────────────────────────────────────────
     // 1. STUDY INFORMATION
@@ -12,10 +12,13 @@ export const ECZ2026_TEMPLATE: CrfTemplateDef = {
       title: 'Study Information',
       fields: [
         { key: 'centre', label: 'Centre', type: 'text', required: true },
+        { key: 'study_duration_days', label: 'Duration of Study (days)', type: 'number', required: true, placeholder: 'e.g. 90' },
         { key: 'date_induction', label: 'Date of Induction into Study', type: 'date', required: true },
-        { key: 'date_expected_completion', label: 'Expected Date of Completion', type: 'date' },
-        { key: 'iec_number', label: 'IEC Number', type: 'text' },
-        { key: 'ctri_number', label: 'CTRI Number', type: 'text' },
+        { key: 'date_expected_completion', label: 'Expected Date of Completion', type: 'calculated', formulaId: 'date_plus_days', hint: 'Auto-filled: Date of Induction + Duration of Study' },
+        { key: 'cr_no', label: 'CR No.', type: 'text' },
+        { key: 'opd_no', label: 'OPD No.', type: 'text' },
+        { key: 'iec_number', label: 'IEC Number', type: 'text', defaultValue: 'F-5(423)/2020-Co/IEC(Ayurveda)/143' },
+        { key: 'ctri_number', label: 'CTRI Number', type: 'text', defaultValue: 'CTRI/2024/12/078563' },
       ],
     },
 
@@ -317,9 +320,9 @@ export const ECZ2026_TEMPLATE: CrfTemplateDef = {
             { value: '3', label: 'Well-nourished' },
           ],
         },
-        { key: 'height', label: 'Height', type: 'number', unit: 'm' },
+        { key: 'height', label: 'Height', type: 'number', unit: 'cm' },
         { key: 'weight', label: 'Weight', type: 'number', unit: 'kg' },
-        { key: 'bmi', label: 'Body Mass Index (BMI)', type: 'number', unit: 'kg/m²', hint: 'Calculated: Weight (kg) ÷ Height² (m²)' },
+        { key: 'bmi', label: 'Body Mass Index (BMI)', type: 'calculated', formulaId: 'bmi', hint: 'Auto-calculated: Weight (kg) ÷ [Height (cm) ÷ 100]²' },
         { key: 'respiratory_rate', label: 'Respiratory Rate', type: 'number', unit: '/min' },
         { key: 'pulse_rate', label: 'Pulse Rate', type: 'number', unit: '/min' },
         { key: 'bp_systolic', label: 'Blood Pressure — Systolic', type: 'number', unit: 'mmHg' },
@@ -423,22 +426,41 @@ export const ECZ2026_TEMPLATE: CrfTemplateDef = {
           ],
         },
         { key: 'lesion_size', label: 'Size of Lesion', type: 'text' },
-        { key: 'lesion_colour', label: 'Colour of Lesion', type: 'text' },
         {
-          key: 'lesion_type',
-          label: 'Type of Lesion',
+          key: 'lesion_colour',
+          label: 'Colour of Lesion',
           type: 'radio',
           options: [
-            { value: 'maculae', label: 'Maculae' },
-            { value: 'annular_plaques_erythema', label: 'Annular plaques with erythematous base' },
-            { value: 'annular_plaques_papules', label: 'Annular plaques with peripheral papules or vesicles' },
+            { value: 'erythematous', label: 'Erythematous' },
+            { value: 'hyperpigmented', label: 'Hyperpigmented' },
+            { value: 'normal', label: 'Normal skin colour' },
+          ],
+        },
+        {
+          key: 'lesion_type',
+          label: 'Type of Lesion (Pidika Lakshanas)',
+          type: 'checkbox_group',
+          options: [
+            { value: 'erythema', label: 'Erythema' },
+            { value: 'papules', label: 'Papules' },
+            { value: 'vesicles', label: 'Vesicles' },
+            { value: 'plaques', label: 'Plaques' },
+            { value: 'lichenification', label: 'Lichenification' },
+            { value: 'scaling', label: 'Scaling' },
+            { value: 'excoriation', label: 'Excoriation' },
+            { value: 'fissures', label: 'Fissures' },
+            { value: 'crusting', label: 'Crusting' },
           ],
         },
         {
           key: 'arrangement',
           label: 'Arrangement',
           type: 'radio',
-          options: [{ value: 'single', label: 'Single' }, { value: 'grouped', label: 'Grouped' }],
+          options: [
+            { value: 'single', label: 'Single' },
+            { value: 'grouped', label: 'Grouped' },
+            { value: 'scattered', label: 'Scattered' },
+          ],
         },
         {
           key: 'itching_present',
@@ -756,7 +778,359 @@ export const ECZ2026_TEMPLATE: CrfTemplateDef = {
     },
 
     // ─────────────────────────────────────────────────────────
-    // 11. ADVERSE DRUG REACTIONS
+    // 11. EASI SCORING (Eczema Area and Severity Index)
+    //     Recorded at every visit: Day 0, 15, 30, 45, 60, 75, 90
+    // ─────────────────────────────────────────────────────────
+    {
+      key: 'easi_scoring',
+      title: 'EASI Scoring (Eczema Area and Severity Index)',
+      fields: [
+        {
+          key: 'easi_instructions',
+          label: 'Area (A): 0=0%, 1=1–9%, 2=10–29%, 3=30–49%, 4=50–69%, 5=70–89%, 6=90–100% | Intensity (E/I/Ex/L): 0=None, 1=Mild, 2=Moderate, 3=Severe | Sub-score = A × (E+I+Ex+L) × multiplier | Multipliers: Head/Neck=0.1, Upper Limbs=0.2, Trunk=0.3, Lower Limbs=0.4 | Total EASI = sum of 4 sub-scores (range 0–72)',
+          type: 'heading',
+        },
+
+        // ── Day 0 / Baseline (BT) ──
+        { key: 'easi_bt_heading', label: 'Day 0 — Baseline (Before Treatment)', type: 'heading' },
+        {
+          key: 'easi_grid_bt',
+          label: 'EASI Grid — Day 0',
+          type: 'assessment_grid',
+          rows: ['Head / Neck (×0.1)', 'Upper Limbs (×0.2)', 'Trunk (×0.3)', 'Lower Limbs (×0.4)'],
+          columns: ['Area (A) 0–6', 'Erythema (E) 0–3', 'Edema / Papulation (I) 0–3', 'Excoriation (Ex) 0–3', 'Lichenification (L) 0–3'],
+        },
+        { key: 'easi_total_bt', label: 'EASI Total — Day 0', type: 'calculated', formulaId: 'easi_bt', hint: 'Σ [A × (E+I+Ex+L) × multiplier] for all 4 regions. Range 0–72.' },
+
+        // ── Day 15 ──
+        { key: 'easi_d15_heading', label: 'Day 15', type: 'heading' },
+        {
+          key: 'easi_grid_d15',
+          label: 'EASI Grid — Day 15',
+          type: 'assessment_grid',
+          rows: ['Head / Neck (×0.1)', 'Upper Limbs (×0.2)', 'Trunk (×0.3)', 'Lower Limbs (×0.4)'],
+          columns: ['Area (A) 0–6', 'Erythema (E) 0–3', 'Edema / Papulation (I) 0–3', 'Excoriation (Ex) 0–3', 'Lichenification (L) 0–3'],
+        },
+        { key: 'easi_total_d15', label: 'EASI Total — Day 15', type: 'calculated', formulaId: 'easi_d15', hint: 'Σ [A × (E+I+Ex+L) × multiplier] for all 4 regions.' },
+
+        // ── Day 30 ──
+        { key: 'easi_d30_heading', label: 'Day 30', type: 'heading' },
+        {
+          key: 'easi_grid_d30',
+          label: 'EASI Grid — Day 30',
+          type: 'assessment_grid',
+          rows: ['Head / Neck (×0.1)', 'Upper Limbs (×0.2)', 'Trunk (×0.3)', 'Lower Limbs (×0.4)'],
+          columns: ['Area (A) 0–6', 'Erythema (E) 0–3', 'Edema / Papulation (I) 0–3', 'Excoriation (Ex) 0–3', 'Lichenification (L) 0–3'],
+        },
+        { key: 'easi_total_d30', label: 'EASI Total — Day 30', type: 'calculated', formulaId: 'easi_d30', hint: 'Σ [A × (E+I+Ex+L) × multiplier] for all 4 regions.' },
+
+        // ── Day 45 ──
+        { key: 'easi_d45_heading', label: 'Day 45', type: 'heading' },
+        {
+          key: 'easi_grid_d45',
+          label: 'EASI Grid — Day 45',
+          type: 'assessment_grid',
+          rows: ['Head / Neck (×0.1)', 'Upper Limbs (×0.2)', 'Trunk (×0.3)', 'Lower Limbs (×0.4)'],
+          columns: ['Area (A) 0–6', 'Erythema (E) 0–3', 'Edema / Papulation (I) 0–3', 'Excoriation (Ex) 0–3', 'Lichenification (L) 0–3'],
+        },
+        { key: 'easi_total_d45', label: 'EASI Total — Day 45', type: 'calculated', formulaId: 'easi_d45', hint: 'Σ [A × (E+I+Ex+L) × multiplier] for all 4 regions.' },
+
+        // ── Day 60 ──
+        { key: 'easi_d60_heading', label: 'Day 60', type: 'heading' },
+        {
+          key: 'easi_grid_d60',
+          label: 'EASI Grid — Day 60',
+          type: 'assessment_grid',
+          rows: ['Head / Neck (×0.1)', 'Upper Limbs (×0.2)', 'Trunk (×0.3)', 'Lower Limbs (×0.4)'],
+          columns: ['Area (A) 0–6', 'Erythema (E) 0–3', 'Edema / Papulation (I) 0–3', 'Excoriation (Ex) 0–3', 'Lichenification (L) 0–3'],
+        },
+        { key: 'easi_total_d60', label: 'EASI Total — Day 60', type: 'calculated', formulaId: 'easi_d60', hint: 'Σ [A × (E+I+Ex+L) × multiplier] for all 4 regions.' },
+
+        // ── Day 75 ──
+        { key: 'easi_d75_heading', label: 'Day 75', type: 'heading' },
+        {
+          key: 'easi_grid_d75',
+          label: 'EASI Grid — Day 75',
+          type: 'assessment_grid',
+          rows: ['Head / Neck (×0.1)', 'Upper Limbs (×0.2)', 'Trunk (×0.3)', 'Lower Limbs (×0.4)'],
+          columns: ['Area (A) 0–6', 'Erythema (E) 0–3', 'Edema / Papulation (I) 0–3', 'Excoriation (Ex) 0–3', 'Lichenification (L) 0–3'],
+        },
+        { key: 'easi_total_d75', label: 'EASI Total — Day 75', type: 'calculated', formulaId: 'easi_d75', hint: 'Σ [A × (E+I+Ex+L) × multiplier] for all 4 regions.' },
+
+        // ── Day 90 / After Treatment (AT) ──
+        { key: 'easi_at_heading', label: 'Day 90 — After Treatment', type: 'heading' },
+        {
+          key: 'easi_grid_at',
+          label: 'EASI Grid — Day 90',
+          type: 'assessment_grid',
+          rows: ['Head / Neck (×0.1)', 'Upper Limbs (×0.2)', 'Trunk (×0.3)', 'Lower Limbs (×0.4)'],
+          columns: ['Area (A) 0–6', 'Erythema (E) 0–3', 'Edema / Papulation (I) 0–3', 'Excoriation (Ex) 0–3', 'Lichenification (L) 0–3'],
+        },
+        { key: 'easi_total_at', label: 'EASI Total — Day 90', type: 'calculated', formulaId: 'easi_at', hint: 'Σ [A × (E+I+Ex+L) × multiplier] for all 4 regions. Range 0–72.' },
+      ],
+    },
+
+    // ─────────────────────────────────────────────────────────
+    // 12. DLQI (Dermatology Life Quality Index)
+    // ─────────────────────────────────────────────────────────
+    {
+      key: 'dlqi_assessment',
+      title: 'DLQI (Dermatology Life Quality Index)',
+      fields: [
+        {
+          key: 'dlqi_instructions',
+          label: 'Ask about the PAST WEEK only. Score each item: 0=Not at all / Not relevant, 1=A little, 2=A lot, 3=Very much. Total score 0–30. Interpretation: 0–1=No effect; 2–5=Small effect; 6–10=Moderate effect; 11–20=Very large effect; 21–30=Extremely large effect on QoL.',
+          type: 'heading',
+        },
+
+        // ── BEFORE TREATMENT ──
+        { key: 'dlqi_bt_heading', label: 'Before Treatment (BT)', type: 'heading' },
+        {
+          key: 'dlqi_q1_bt',
+          label: 'Q1. Over the last week, how itchy, sore, painful or stinging has your skin been?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q2_bt',
+          label: 'Q2. Over the last week, how embarrassed or self-conscious have you been because of your skin?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q3_bt',
+          label: 'Q3. Over the last week, how much has your skin interfered with you going shopping or looking after your home / garden?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q4_bt',
+          label: 'Q4. Over the last week, how much has your skin influenced the clothes you wear?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q5_bt',
+          label: 'Q5. Over the last week, how much has your skin affected any social or leisure activities?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q6_bt',
+          label: 'Q6. Over the last week, how much has your skin made it difficult for you to do any sport?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q7_bt',
+          label: 'Q7. Over the last week, has your skin prevented you from working or studying?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Yes, prevented' },
+            { value: '2', label: '2 — A lot of trouble at work / study because of skin' },
+            { value: '1', label: '1 — A little trouble at work / study because of skin' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q8_bt',
+          label: 'Q8. Over the last week, has your skin created problems with your partner or any of your close friends or relatives?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q9_bt',
+          label: 'Q9. Over the last week, how much has your skin caused any sexual difficulties?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q10_bt',
+          label: 'Q10. Over the last week, how much of a problem has the treatment for your skin been (e.g. mess, time to apply)?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_total_bt',
+          label: 'DLQI Total Score — BT',
+          type: 'calculated',
+          sumKeys: [
+            'dlqi_q1_bt','dlqi_q2_bt','dlqi_q3_bt','dlqi_q4_bt','dlqi_q5_bt',
+            'dlqi_q6_bt','dlqi_q7_bt','dlqi_q8_bt','dlqi_q9_bt','dlqi_q10_bt',
+          ],
+        },
+
+        // ── AFTER TREATMENT ──
+        { key: 'dlqi_at_heading', label: 'After Treatment (AT)', type: 'heading' },
+        {
+          key: 'dlqi_q1_at',
+          label: 'Q1. Over the last week, how itchy, sore, painful or stinging has your skin been?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q2_at',
+          label: 'Q2. Over the last week, how embarrassed or self-conscious have you been because of your skin?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q3_at',
+          label: 'Q3. Over the last week, how much has your skin interfered with you going shopping or looking after your home / garden?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q4_at',
+          label: 'Q4. Over the last week, how much has your skin influenced the clothes you wear?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q5_at',
+          label: 'Q5. Over the last week, how much has your skin affected any social or leisure activities?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q6_at',
+          label: 'Q6. Over the last week, how much has your skin made it difficult for you to do any sport?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q7_at',
+          label: 'Q7. Over the last week, has your skin prevented you from working or studying?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Yes, prevented' },
+            { value: '2', label: '2 — A lot of trouble at work / study because of skin' },
+            { value: '1', label: '1 — A little trouble at work / study because of skin' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q8_at',
+          label: 'Q8. Over the last week, has your skin created problems with your partner or any of your close friends or relatives?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q9_at',
+          label: 'Q9. Over the last week, how much has your skin caused any sexual difficulties?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_q10_at',
+          label: 'Q10. Over the last week, how much of a problem has the treatment for your skin been (e.g. mess, time to apply)?',
+          type: 'radio',
+          options: [
+            { value: '3', label: '3 — Very much' },
+            { value: '2', label: '2 — A lot' },
+            { value: '1', label: '1 — A little' },
+            { value: '0', label: '0 — Not at all / Not relevant' },
+          ],
+        },
+        {
+          key: 'dlqi_total_at',
+          label: 'DLQI Total Score — AT',
+          type: 'calculated',
+          sumKeys: [
+            'dlqi_q1_at','dlqi_q2_at','dlqi_q3_at','dlqi_q4_at','dlqi_q5_at',
+            'dlqi_q6_at','dlqi_q7_at','dlqi_q8_at','dlqi_q9_at','dlqi_q10_at',
+          ],
+        },
+      ],
+    },
+
+    // ─────────────────────────────────────────────────────────
+    // 13. ADVERSE DRUG REACTIONS
     // ─────────────────────────────────────────────────────────
     {
       key: 'adr',
@@ -820,7 +1194,7 @@ export const ECZ2026_TEMPLATE: CrfTemplateDef = {
     },
 
     // ─────────────────────────────────────────────────────────
-    // 12. COMPLETION
+    // 14. COMPLETION
     // ─────────────────────────────────────────────────────────
     {
       key: 'completion',

@@ -12,6 +12,13 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Redirect non-investigators to their own home
+  const { data: profileCheck } = await supabase
+    .from('user_profiles').select('role').eq('id', user.id).single()
+  const checkRole = (profileCheck as any)?.role
+  if (checkRole === 'admin') redirect('/admin')
+  if (checkRole === 'teacher') redirect('/teacher')
+
   // Get investigator's study
   const { data: linkRaw } = await supabase
     .from('study_investigators')
@@ -32,6 +39,19 @@ export default async function DashboardPage() {
       .eq('study_id', study.id)
       .order('created_at', { ascending: false })
     if (data) patients.push(...(data as any[]))
+  }
+
+  // CRF validation status for each patient
+  const patientIds = patients.map((p) => p.id)
+  let crfStatuses: Record<string, string> = {}
+  if (patientIds.length > 0) {
+    const { data: crfsData } = await supabase
+      .from('crfs')
+      .select('patient_id, validation_status')
+      .in('patient_id', patientIds)
+    for (const c of (crfsData ?? []) as any[]) {
+      crfStatuses[c.patient_id] = c.validation_status ?? 'pending'
+    }
   }
 
   return (
@@ -76,8 +96,10 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Study</p>
-            <p className="mt-1 text-sm font-bold text-green-700">{study.study_code}</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Approved</p>
+            <p className="mt-1 text-2xl font-bold text-green-700">
+              {Object.values(crfStatuses).filter((s) => s === 'approved').length}
+            </p>
           </div>
         </div>
       )}
@@ -98,6 +120,7 @@ export default async function DashboardPage() {
                 <th className="px-5 py-3 text-left font-medium">Age / Gender</th>
                 <th className="px-5 py-3 text-left font-medium">Group</th>
                 <th className="px-5 py-3 text-left font-medium">Status</th>
+                <th className="px-5 py-3 text-left font-medium">CRF Status</th>
                 <th className="px-5 py-3 text-left font-medium">CRF</th>
               </tr>
             </thead>
@@ -120,6 +143,21 @@ export default async function DashboardPage() {
                     <span className="inline-flex rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 capitalize">
                       {p.status}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {(() => {
+                      const s = crfStatuses[p.id] ?? 'not started'
+                      return (
+                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
+                          s === 'approved' ? 'bg-green-50 text-green-700'
+                          : s === 'submitted' ? 'bg-amber-50 text-amber-700'
+                          : s === 'returned' ? 'bg-red-50 text-red-600'
+                          : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {s === 'pending' ? 'In Progress' : s === 'not started' ? 'Not Started' : s}
+                        </span>
+                      )
+                    })()}
                   </td>
                   <td className="px-5 py-3">
                     <Link
