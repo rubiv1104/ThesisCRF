@@ -18,12 +18,14 @@ import {
   GraduationCap,
   BookOpenCheck,
   TableProperties,
+  FileText,
 } from 'lucide-react'
 import { cn } from '@/utils'
 import { APP_NAME } from '@/constants'
 
 const INVESTIGATOR_NAV = [
   { label: 'My Patients', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'CRF Preview', href: '/crf-preview', icon: FileText },
   { label: 'Master Chart', href: '/master-chart', icon: TableProperties },
   { label: 'Investigations', href: '/investigations', icon: FlaskConical },
   { label: 'Assessments & Scales', href: '/assessments', icon: Scale },
