@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Calculator } from 'lucide-react'
+import { Calculator, Activity } from 'lucide-react'
 
 // ─── EASI Calculator ────────────────────────────────────────────────────────
 
@@ -136,7 +136,6 @@ const DLQI_QUESTIONS = [
   { q: 'Over the last week, how much of a problem has the treatment for your skin been?' },
 ]
 const DLQI_OPTIONS = ['0 — Not at all / Not relevant', '1 — A little', '2 — A lot', '3 — Very much']
-// Q7 follow-up options when patient answers "No" (max score 2)
 const DLQI_Q7_FOLLOWUP = ['0 — Not at all', '1 — A little', '2 — A lot']
 
 function dlqiInterpret(total: number) {
@@ -149,7 +148,6 @@ function dlqiInterpret(total: number) {
 
 function DlqiCalculator() {
   const [scores, setScores] = useState<number[]>(Array(10).fill(0))
-  // Q7 branch: null = not answered, true = prevented work (score=3), false = no → follow-up
   const [q7Prevented, setQ7Prevented] = useState<boolean | null>(null)
 
   function getScore(i: number) {
@@ -175,7 +173,6 @@ function DlqiCalculator() {
             <div className="flex-1 space-y-2">
               <p className="text-sm text-slate-700">{q}</p>
               {special ? (
-                // Q7: Yes/No branch
                 <div className="space-y-2">
                   <div className="flex gap-3">
                     <button
@@ -223,7 +220,6 @@ function DlqiCalculator() {
         ))}
       </div>
 
-      {/* Total */}
       <div className="rounded-xl border-2 border-blue-100 bg-blue-50 p-5 flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-medium text-slate-500">Total DLQI Score</p>
@@ -241,6 +237,373 @@ function DlqiCalculator() {
       >
         Reset all
       </button>
+    </div>
+  )
+}
+
+// ─── CLDQ-NASH Calculator ────────────────────────────────────────────────────
+
+const CLDQ_DOMAINS = [
+  {
+    key: 'as', label: 'Abdominal Symptoms', abbr: 'AS', color: 'blue',
+    items: [
+      'Abdominal pain',
+      'Abdominal discomfort',
+      'Abdominal bloating',
+      'Pain in the right side of your abdomen',
+      'Belching / gas',
+    ],
+  },
+  {
+    key: 'fa', label: 'Fatigue', abbr: 'FA', color: 'amber',
+    items: [
+      'Feeling tired',
+      'Feeling exhausted / fatigued',
+      'Feeling listless or drained of energy',
+      'Feeling drowsy during the day',
+      'Difficulty concentrating',
+      'Difficulty with memory',
+    ],
+  },
+  {
+    key: 'ss', label: 'Systemic Symptoms', abbr: 'SS', color: 'purple',
+    items: [
+      'Dry mouth',
+      'Muscle cramps',
+      'Itching / pruritus',
+      'Trouble sleeping',
+      'Headaches',
+      'Dizziness',
+    ],
+  },
+  {
+    key: 'ac', label: 'Activity', abbr: 'AC', color: 'green',
+    items: [
+      'Needing to rest',
+      'Being unable to perform usual activities',
+      'Being less productive than usual',
+      'Difficulty with physical activities',
+    ],
+  },
+  {
+    key: 'ef', label: 'Emotional Function', abbr: 'EF', color: 'rose',
+    items: [
+      'Worrying about your future',
+      'Feeling depressed',
+      'Feeling frustrated',
+      'Worrying about complications of your condition',
+      'Feeling like a burden to others',
+      'Feeling irritable',
+      'Feeling embarrassed about your condition',
+    ],
+  },
+  {
+    key: 'wo', label: 'Worry', abbr: 'WO', color: 'orange',
+    items: [
+      'Worrying about your weight',
+      'Worrying about your medications',
+      'Worrying about your diet',
+      'Feeling concerned about your condition',
+      'Worrying about new treatments',
+      'Worrying about your condition getting worse',
+      'Worrying about family members developing the condition',
+      'Worrying about telling others about your condition',
+    ],
+  },
+]
+
+const CLDQ_LABELS = [
+  '1 — All the time',
+  '2 — Most of the time',
+  '3 — A good bit of the time',
+  '4 — Some of the time',
+  '5 — A little of the time',
+  '6 — Rarely',
+  '7 — Never',
+]
+
+const CLDQ_COLOR: Record<string, string> = {
+  blue:   'border-blue-200 bg-blue-50',
+  amber:  'border-amber-200 bg-amber-50',
+  purple: 'border-purple-200 bg-purple-50',
+  green:  'border-green-200 bg-green-50',
+  rose:   'border-rose-200 bg-rose-50',
+  orange: 'border-orange-200 bg-orange-50',
+}
+const CLDQ_TEXT: Record<string, string> = {
+  blue:   'text-blue-700',
+  amber:  'text-amber-700',
+  purple: 'text-purple-700',
+  green:  'text-green-700',
+  rose:   'text-rose-700',
+  orange: 'text-orange-700',
+}
+
+function cldqInterpret(score: number) {
+  if (score >= 6) return { label: 'Minimal impairment', color: 'text-green-700 bg-green-50' }
+  if (score >= 5) return { label: 'Mild impairment', color: 'text-yellow-700 bg-yellow-50' }
+  if (score >= 4) return { label: 'Moderate impairment', color: 'text-orange-700 bg-orange-50' }
+  if (score >= 3) return { label: 'Severe impairment', color: 'text-red-700 bg-red-50' }
+  return { label: 'Very severe impairment', color: 'text-red-900 bg-red-100' }
+}
+
+function CldqNashCalculator() {
+  // scores[domainIndex][itemIndex] = 1–7 (default 4 = neutral midpoint)
+  const [scores, setScores] = useState<number[][]>(
+    CLDQ_DOMAINS.map((d) => Array(d.items.length).fill(4))
+  )
+
+  function setScore(di: number, ii: number, val: number) {
+    setScores((prev) => {
+      const next = prev.map((row) => [...row])
+      if (next[di]) next[di]![ii] = val
+      return next
+    })
+  }
+
+  const domainMeans = CLDQ_DOMAINS.map((d, di) => {
+    const row = scores[di] ?? []
+    return +(row.reduce((s, v) => s + v, 0) / row.length).toFixed(2)
+  })
+
+  const allItems = scores.flat()
+  const total = +(allItems.reduce((s, v) => s + v, 0) / allItems.length).toFixed(2)
+  const interp = cldqInterpret(total)
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-slate-500">
+        Score each item <strong>1–7</strong> based on how often the patient experienced it over the past 2 weeks.
+        Higher score = better quality of life. Default starts at 4 (midpoint).
+      </p>
+
+      {CLDQ_DOMAINS.map((domain, di) => {
+        const mean = domainMeans[di] ?? 0
+        return (
+          <div key={domain.key} className={`rounded-xl border ${CLDQ_COLOR[domain.color] ?? ''} p-4 space-y-3`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`rounded-md px-2 py-0.5 text-xs font-bold font-mono ${CLDQ_TEXT[domain.color] ?? ''} bg-white/70`}>
+                  {domain.abbr}
+                </span>
+                <span className={`text-sm font-semibold ${CLDQ_TEXT[domain.color] ?? ''}`}>{domain.label}</span>
+                <span className="text-xs text-slate-400">({domain.items.length} items)</span>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-slate-400">Domain mean</p>
+                <p className={`text-xl font-bold ${CLDQ_TEXT[domain.color] ?? ''}`}>{mean.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {domain.items.map((item, ii) => (
+                <div key={ii} className="flex items-center gap-3 bg-white/60 rounded-lg px-3 py-2">
+                  <span className="text-xs text-slate-400 w-4 shrink-0">{ii + 1}.</span>
+                  <span className="flex-1 text-xs text-slate-700">{item}</span>
+                  <select
+                    value={scores[di]?.[ii] ?? 4}
+                    onChange={(e) => setScore(di, ii, Number(e.target.value))}
+                    className="shrink-0 w-52 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    {CLDQ_LABELS.map((label, j) => (
+                      <option key={j} value={j + 1}>{label}</option>
+                    ))}
+                  </select>
+                  <span className={`shrink-0 w-5 text-center text-sm font-bold ${CLDQ_TEXT[domain.color] ?? ''}`}>
+                    {scores[di]?.[ii] ?? 4}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Totals */}
+      <div className="rounded-xl border-2 border-slate-200 bg-white p-5 space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium text-slate-500">Total CLDQ-NASH Score</p>
+            <p className="text-4xl font-bold text-slate-900">{total}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Mean of all 36 items · Range 1–7</p>
+          </div>
+          <span className={`rounded-full px-4 py-2 text-sm font-bold ${interp.color}`}>
+            {interp.label}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100">
+          {CLDQ_DOMAINS.map((d, di) => (
+            <div key={d.key} className={`rounded-lg px-3 py-2 ${CLDQ_COLOR[d.color] ?? ''}`}>
+              <p className={`text-xs font-semibold ${CLDQ_TEXT[d.color] ?? ''}`}>{d.abbr}: {domainMeans[di]?.toFixed(2)}</p>
+              <p className="text-xs text-slate-500">{d.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button
+        onClick={() => setScores(CLDQ_DOMAINS.map((d) => Array(d.items.length).fill(4)))}
+        className="text-xs text-slate-400 hover:text-slate-600 underline"
+      >
+        Reset all to midpoint (4)
+      </button>
+    </div>
+  )
+}
+
+// ─── FibroScan Interpreter ───────────────────────────────────────────────────
+
+const LSM_STAGES = [
+  { label: 'F0–F1', desc: 'No or minimal fibrosis', range: '< 7.0 kPa', color: 'green',   min: 0,    max: 6.99 },
+  { label: 'F2',    desc: 'Significant fibrosis',   range: '7.0–9.4 kPa', color: 'yellow', min: 7.0,  max: 9.49 },
+  { label: 'F3',    desc: 'Advanced (bridging) fibrosis', range: '9.5–12.4 kPa', color: 'orange', min: 9.5, max: 12.49 },
+  { label: 'F4',    desc: 'Cirrhosis',               range: '≥ 12.5 kPa', color: 'red',    min: 12.5, max: Infinity },
+]
+
+const CAP_STAGES = [
+  { label: 'S0', desc: 'No steatosis (< 5%)',         range: '< 248 dB/m',    color: 'green',  min: 0,   max: 247 },
+  { label: 'S1', desc: 'Mild steatosis (5–33%)',       range: '248–267 dB/m',  color: 'yellow', min: 248, max: 267 },
+  { label: 'S2', desc: 'Moderate steatosis (33–66%)',  range: '268–279 dB/m',  color: 'orange', min: 268, max: 279 },
+  { label: 'S3', desc: 'Severe steatosis (> 66%)',     range: '≥ 280 dB/m',   color: 'red',    min: 280, max: Infinity },
+]
+
+const FS_BADGE: Record<string, string> = {
+  green:  'bg-green-50 text-green-700 border-green-200',
+  yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  orange: 'bg-orange-50 text-orange-700 border-orange-200',
+  red:    'bg-red-50 text-red-700 border-red-200',
+}
+
+function FibroScanInterpreter() {
+  const [lsm, setLsm] = useState('')
+  const [cap, setCap] = useState('')
+
+  const lsmVal = parseFloat(lsm)
+  const capVal = parseFloat(cap)
+
+  const lsmStage = isNaN(lsmVal) ? null : LSM_STAGES.find((s) => lsmVal >= s.min && lsmVal <= s.max) ?? null
+  const capStage = isNaN(capVal) ? null : CAP_STAGES.find((s) => capVal >= s.min && capVal <= s.max) ?? null
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 sm:grid-cols-2">
+
+        {/* LSM Panel */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">Liver Stiffness Measurement (LSM)</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Fibrosis stage · Transient Elastography</p>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-600">LSM value (kPa)</label>
+            <input
+              type="number"
+              min={0}
+              step={0.1}
+              value={lsm}
+              onChange={(e) => setLsm(e.target.value)}
+              placeholder="e.g. 8.4"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          {lsmStage ? (
+            <div className={`rounded-xl border-2 p-4 ${FS_BADGE[lsmStage.color] ?? ''}`}>
+              <p className="text-3xl font-bold">{lsmStage.label}</p>
+              <p className="text-sm font-medium mt-0.5">{lsmStage.desc}</p>
+              <p className="text-xs mt-1 opacity-70">Range: {lsmStage.range}</p>
+            </div>
+          ) : lsm ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-400">
+              Enter a valid value
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">
+              Enter LSM to see fibrosis stage
+            </div>
+          )}
+
+          {/* Reference table */}
+          <div className="space-y-1 pt-2 border-t border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 mb-2">Reference cutoffs</p>
+            {LSM_STAGES.map((s) => (
+              <div key={s.label}
+                className={`flex items-center justify-between rounded-lg px-3 py-1.5 text-xs border ${
+                  lsmStage?.label === s.label
+                    ? FS_BADGE[s.color] + ' font-semibold'
+                    : 'border-transparent text-slate-600'
+                }`}
+              >
+                <span className="font-mono font-bold w-10">{s.label}</span>
+                <span className="flex-1">{s.desc}</span>
+                <span className="text-slate-400">{s.range}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CAP Panel */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">Controlled Attenuation Parameter (CAP)</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Steatosis grade · Hepatic fat quantification</p>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-600">CAP score (dB/m)</label>
+            <input
+              type="number"
+              min={100}
+              max={400}
+              step={1}
+              value={cap}
+              onChange={(e) => setCap(e.target.value)}
+              placeholder="e.g. 265"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          {capStage ? (
+            <div className={`rounded-xl border-2 p-4 ${FS_BADGE[capStage.color] ?? ''}`}>
+              <p className="text-3xl font-bold">{capStage.label}</p>
+              <p className="text-sm font-medium mt-0.5">{capStage.desc}</p>
+              <p className="text-xs mt-1 opacity-70">Range: {capStage.range}</p>
+            </div>
+          ) : cap ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-400">
+              Enter a valid value
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">
+              Enter CAP score to see steatosis grade
+            </div>
+          )}
+
+          {/* Reference table */}
+          <div className="space-y-1 pt-2 border-t border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 mb-2">Reference cutoffs</p>
+            {CAP_STAGES.map((s) => (
+              <div key={s.label}
+                className={`flex items-center justify-between rounded-lg px-3 py-1.5 text-xs border ${
+                  capStage?.label === s.label
+                    ? FS_BADGE[s.color] + ' font-semibold'
+                    : 'border-transparent text-slate-600'
+                }`}
+              >
+                <span className="font-mono font-bold w-10">{s.label}</span>
+                <span className="flex-1">{s.desc}</span>
+                <span className="text-slate-400">{s.range}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+        <strong>Note:</strong> Cutoffs shown are general M-probe values. Interpretation may vary by probe type (M vs XL) and clinical context. Always correlate with biopsy and clinical findings for diagnostic decisions.
+      </div>
     </div>
   )
 }
@@ -287,14 +650,16 @@ const SCALE_REFS = [
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
-type Tab = 'easi' | 'dlqi' | 'reference'
+type Tab = 'easi' | 'dlqi' | 'cldq' | 'fibroscan' | 'reference'
 
 export default function AssessmentsPage() {
   const [tab, setTab] = useState<Tab>('easi')
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: 'easi', label: 'EASI Calculator' },
-    { id: 'dlqi', label: 'DLQI Calculator' },
+  const tabs: { id: Tab; label: string; icon?: 'calc' | 'activity' }[] = [
+    { id: 'easi',      label: 'EASI',          icon: 'calc' },
+    { id: 'dlqi',      label: 'DLQI',          icon: 'calc' },
+    { id: 'cldq',      label: 'CLDQ-NASH',     icon: 'calc' },
+    { id: 'fibroscan', label: 'FibroScan',      icon: 'activity' },
     { id: 'reference', label: 'Scale Reference' },
   ]
 
@@ -308,7 +673,7 @@ export default function AssessmentsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 w-fit">
+      <div className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 w-fit">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -319,7 +684,8 @@ export default function AssessmentsPage() {
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            {(t.id === 'easi' || t.id === 'dlqi') && <Calculator size={14} />}
+            {t.icon === 'calc' && <Calculator size={14} />}
+            {t.icon === 'activity' && <Activity size={14} />}
             {t.label}
           </button>
         ))}
@@ -340,6 +706,24 @@ export default function AssessmentsPage() {
             <strong>DLQI</strong> — Dermatology Life Quality Index · 10 items, Range 0–30 · Used in ECZ2026
           </div>
           <DlqiCalculator />
+        </div>
+      )}
+
+      {tab === 'cldq' && (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700">
+            <strong>CLDQ-NASH</strong> — Chronic Liver Disease Questionnaire (NAFLD/NASH) · 36 items, 6 domains · Range 1–7 (higher = better) · Used in FLD2026
+          </div>
+          <CldqNashCalculator />
+        </div>
+      )}
+
+      {tab === 'fibroscan' && (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700">
+            <strong>FibroScan</strong> — Transient Elastography interpreter · LSM (kPa) → Fibrosis stage · CAP (dB/m) → Steatosis grade · Used in FLD2026
+          </div>
+          <FibroScanInterpreter />
         </div>
       )}
 
