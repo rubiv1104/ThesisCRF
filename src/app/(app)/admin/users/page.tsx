@@ -18,7 +18,7 @@ export default async function AdminUsersPage() {
   const { data: usersRaw } = await (supabase as any)
     .from('user_profiles')
     .select(`
-      id, full_name, email, role,
+      id, full_name, email, role, is_active,
       study_investigators(study_id, studies(id, study_code)),
       study_teachers(study_id, studies(id, study_code))
     `)
@@ -30,6 +30,7 @@ export default async function AdminUsersPage() {
     full_name: u.full_name ?? '(no name)',
     email: u.email ?? '',
     role: u.role ?? 'investigator',
+    is_active: u.is_active !== false,
     inv_studies: (u.study_investigators ?? []).map((si: any) => ({
       id: si.studies?.id ?? si.study_id,
       code: si.studies?.study_code ?? '?',

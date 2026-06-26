@@ -61,3 +61,14 @@ export async function removeFromStudy(userId: string, studyId: string, role: 'te
   revalidatePath('/admin/users')
   return { success: true }
 }
+
+export async function toggleUserActive(userId: string, isActive: boolean) {
+  const supabase = await assertAdmin()
+  const { error } = await supabase
+    .from('user_profiles')
+    .update({ is_active: isActive })
+    .eq('id', userId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/users')
+  return { success: true }
+}
