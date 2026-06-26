@@ -62,8 +62,7 @@ function GroupedView({ patients }: { patients: Patient[] }) {
   // Group by study_code
   const byStudy: Record<string, Patient[]> = {}
   for (const p of patients) {
-    if (!byStudy[p.study_code]) byStudy[p.study_code] = []
-    byStudy[p.study_code].push(p)
+    ;(byStudy[p.study_code] ??= []).push(p)
   }
   const studyCodes = Object.keys(byStudy).sort()
 
@@ -83,8 +82,7 @@ function GroupedView({ patients }: { patients: Patient[] }) {
         const byGroup: Record<string, Patient[]> = {}
         for (const p of studyPatients) {
           const g = p.group_name ?? 'Unassigned'
-          if (!byGroup[g]) byGroup[g] = []
-          byGroup[g].push(p)
+          ;(byGroup[g] ??= []).push(p)
         }
         const groups = Object.keys(byGroup).sort()
 
