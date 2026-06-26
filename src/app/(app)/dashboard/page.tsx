@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
 import { AddPatientDialog } from '@/features/patients/components/AddPatientDialog'
+import { DeletePatientButton } from '@/app/(app)/admin/patients/DeletePatientButton'
 
 export const metadata = { title: `Dashboard | ${APP_NAME}` }
 
@@ -121,7 +122,7 @@ export default async function DashboardPage() {
                 <th className="px-5 py-3 text-left font-medium">Group</th>
                 <th className="px-5 py-3 text-left font-medium">Status</th>
                 <th className="px-5 py-3 text-left font-medium">CRF Status</th>
-                <th className="px-5 py-3 text-left font-medium">CRF</th>
+                <th className="px-5 py-3 text-left font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -160,12 +161,15 @@ export default async function DashboardPage() {
                     })()}
                   </td>
                   <td className="px-5 py-3">
-                    <Link
-                      href={`/patients/${p.id}/crf`}
-                      className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
-                    >
-                      Open CRF
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/patients/${p.id}/crf`}
+                        className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+                      >
+                        Open CRF
+                      </Link>
+                      <DeletePatientButton patientId={p.id} patientName={p.patient_name} redirectTo="/dashboard" />
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -1,18 +1,30 @@
 'use client'
 
 import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Trash2, Loader2 } from 'lucide-react'
 import { deletePatient } from '@/app/(app)/patients/[id]/crf/actions'
 import { toast } from 'sonner'
 
-export function DeletePatientButton({ patientId, patientName }: { patientId: string; patientName: string }) {
+interface Props {
+  patientId: string
+  patientName: string
+  redirectTo?: string
+}
+
+export function DeletePatientButton({ patientId, patientName, redirectTo = '/admin/patients' }: Props) {
   const [pending, startTransition] = useTransition()
+  const router = useRouter()
 
   function handleDelete() {
     if (!confirm(`Delete patient "${patientName}" and all their CRF data permanently?\n\nThis cannot be undone.`)) return
     startTransition(async () => {
       const res = await deletePatient(patientId)
-      if (res && 'error' in res) toast.error(res.error)
+      if (res && 'error' in res) {
+        toast.error(res.error)
+      } else {
+        router.push(redirectTo)
+      }
     })
   }
 

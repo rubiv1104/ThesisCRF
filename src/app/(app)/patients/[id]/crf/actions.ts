@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
 export async function submitCrfForReview(patientId: string): Promise<{ success: true } | { error: string }> {
@@ -68,7 +67,16 @@ export async function deletePatient(patientId: string): Promise<{ success: true 
 
   const { data: profile } = await supabase
     .from('user_profiles').select('role').eq('id', user.id).single()
-  if ((profile as any)?.role !== 'admin') return { error: 'Only admins can delete patients.' }
+  const role = (profile as any)?.role
+
+  // Investigators can only delete their own patients; admins can delete any
+  if (role === 'investigator') {
+    const { data: patient } = await supabase
+      .from('patients').select('created_by').eq('id', patientId).single()
+    if (!patient || patient.created_by !== user.id) return { error: 'You can only delete patients you enrolled.' }
+  } else if (role !== 'admin') {
+    return { error: 'You do not have permission to delete patients.' }
+  }
 
   // Delete cascade: crf_responses → crf_sections → crfs → patient
   const { data: crfRow } = await supabase.from('crfs').select('id').eq('patient_id', patientId).maybeSingle()
@@ -85,5 +93,5 @@ export async function deletePatient(patientId: string): Promise<{ success: true 
   const { error } = await supabase.from('patients').delete().eq('id', patientId)
   if (error) return { error: error.message }
 
-  redirect('/admin/patients')
+  return { success: true }
 }
