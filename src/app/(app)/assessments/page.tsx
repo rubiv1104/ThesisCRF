@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Calculator, ChevronDown, ChevronUp } from 'lucide-react'
+import { Calculator } from 'lucide-react'
 
 // ─── EASI Calculator ────────────────────────────────────────────────────────
 
@@ -11,7 +11,7 @@ const EASI_REGIONS = [
   { key: 'tr', label: 'Trunk',       mult: 0.3 },
   { key: 'll', label: 'Lower Limbs', mult: 0.4 },
 ]
-const AREA_LABELS = ['0 (0%)', '1 (1–9%)', '2 (10–29%)', '3 (30–49%)', '4 (50–69%)', '5 (70–89%)', '6 (90–100%)']
+const AREA_LABELS = ['0 (no active eczema)', '1 (1–9%)', '2 (10–29%)', '3 (30–49%)', '4 (50–69%)', '5 (70–89%)', '6 (90–100%)']
 const INTENSITY_LABELS = ['0 — None', '1 — Mild', '2 — Moderate', '3 — Severe']
 const INTENSITY_SIGNS = [
   { key: 'e', label: 'Erythema (E)' },
@@ -124,18 +124,20 @@ function EasiCalculator() {
 // ─── DLQI Calculator ────────────────────────────────────────────────────────
 
 const DLQI_QUESTIONS = [
-  'Over the last week, how itchy, sore, painful or stinging has your skin been?',
-  'Over the last week, how embarrassed or self-conscious have you been because of your skin?',
-  'Over the last week, how much has your skin interfered with you going shopping or looking after your home or garden?',
-  'Over the last week, how much has your skin influenced the clothes you wear?',
-  'Over the last week, how much has your skin affected any social or leisure activities?',
-  'Over the last week, how much has your skin made it difficult for you to do any sport?',
-  'Has your skin prevented you from working or studying? (If No — how much has your skin been a problem at work or studying?)',
-  'Over the last week, how much has your skin caused problems with your partner or close friends or relatives?',
-  'Over the last week, how much has your skin caused any sexual difficulties?',
-  'Over the last week, how much of a problem has the treatment for your skin been?',
+  { q: 'Over the last week, how itchy, sore, painful or stinging has your skin been?' },
+  { q: 'Over the last week, how embarrassed or self-conscious have you been because of your skin?' },
+  { q: 'Over the last week, how much has your skin interfered with you going shopping or looking after your home or garden?' },
+  { q: 'Over the last week, how much has your skin influenced the clothes you wear?' },
+  { q: 'Over the last week, how much has your skin affected any social or leisure activities?' },
+  { q: 'Over the last week, how much has your skin made it difficult for you to do any sport?' },
+  { q: 'Has your skin prevented you from working or studying?', special: true },
+  { q: 'Over the last week, how much has your skin caused problems with your partner or any of your close friends or relatives?' },
+  { q: 'Over the last week, how much has your skin caused any sexual difficulties?' },
+  { q: 'Over the last week, how much of a problem has the treatment for your skin been?' },
 ]
 const DLQI_OPTIONS = ['0 — Not at all / Not relevant', '1 — A little', '2 — A lot', '3 — Very much']
+// Q7 follow-up options when patient answers "No" (max score 2)
+const DLQI_Q7_FOLLOWUP = ['0 — Not at all', '1 — A little', '2 — A lot']
 
 function dlqiInterpret(total: number) {
   if (total <= 1) return { label: 'No effect on life', color: 'text-green-700 bg-green-50' }
@@ -147,34 +149,76 @@ function dlqiInterpret(total: number) {
 
 function DlqiCalculator() {
   const [scores, setScores] = useState<number[]>(Array(10).fill(0))
-  const total = scores.reduce((a, b) => a + b, 0)
+  // Q7 branch: null = not answered, true = prevented work (score=3), false = no → follow-up
+  const [q7Prevented, setQ7Prevented] = useState<boolean | null>(null)
+
+  function getScore(i: number) {
+    if (i === 6) {
+      if (q7Prevented === true) return 3
+      if (q7Prevented === false) return scores[6] ?? 0
+      return 0
+    }
+    return scores[i] ?? 0
+  }
+
+  const total = DLQI_QUESTIONS.reduce((sum, _, i) => sum + getScore(i), 0)
   const interp = dlqiInterpret(total)
 
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        {DLQI_QUESTIONS.map((q, i) => (
+        {DLQI_QUESTIONS.map(({ q, special }, i) => (
           <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 flex items-start gap-4">
             <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700 mt-0.5">
               {i + 1}
             </span>
             <div className="flex-1 space-y-2">
               <p className="text-sm text-slate-700">{q}</p>
-              <select
-                value={scores[i]}
-                onChange={(e) => {
-                  const next = [...scores]
-                  next[i] = Number(e.target.value)
-                  setScores(next)
-                }}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
-              >
-                {DLQI_OPTIONS.map((opt, j) => (
-                  <option key={j} value={j}>{opt}</option>
-                ))}
-              </select>
+              {special ? (
+                // Q7: Yes/No branch
+                <div className="space-y-2">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setQ7Prevented(true)}
+                      className={`rounded-lg border px-4 py-1.5 text-xs font-medium transition-colors ${
+                        q7Prevented === true ? 'bg-red-600 text-white border-red-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      Yes — prevented work/study (score 3)
+                    </button>
+                    <button
+                      onClick={() => { setQ7Prevented(false); setScores((prev) => { const n = [...prev]; n[6] = 0; return n }) }}
+                      className={`rounded-lg border px-4 py-1.5 text-xs font-medium transition-colors ${
+                        q7Prevented === false ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      No
+                    </button>
+                  </div>
+                  {q7Prevented === false && (
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">How much has your skin been a problem at work or studying?</p>
+                      <select
+                        value={scores[6]}
+                        onChange={(e) => { const n = [...scores]; n[6] = Number(e.target.value); setScores(n) }}
+                        className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      >
+                        {DLQI_Q7_FOLLOWUP.map((opt, j) => <option key={j} value={j}>{opt}</option>)}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <select
+                  value={scores[i]}
+                  onChange={(e) => { const n = [...scores]; n[i] = Number(e.target.value); setScores(n) }}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  {DLQI_OPTIONS.map((opt, j) => <option key={j} value={j}>{opt}</option>)}
+                </select>
+              )}
             </div>
-            <span className="shrink-0 text-xl font-bold text-blue-700 w-6 text-center">{scores[i]}</span>
+            <span className="shrink-0 text-xl font-bold text-blue-700 w-6 text-center">{getScore(i)}</span>
           </div>
         ))}
       </div>
@@ -184,7 +228,7 @@ function DlqiCalculator() {
         <div>
           <p className="text-xs font-medium text-slate-500">Total DLQI Score</p>
           <p className="text-4xl font-bold text-blue-700">{total}</p>
-          <p className="text-xs text-slate-400 mt-0.5">Range 0–30</p>
+          <p className="text-xs text-slate-400 mt-0.5">Range 0–30 · Q7: {q7Prevented === true ? 'Prevented work (3)' : q7Prevented === false ? `Not prevented (${scores[6]})` : 'Not answered (0)'}</p>
         </div>
         <span className={`rounded-full px-4 py-2 text-sm font-bold ${interp.color}`}>
           {interp.label}
@@ -192,7 +236,7 @@ function DlqiCalculator() {
       </div>
 
       <button
-        onClick={() => setScores(Array(10).fill(0))}
+        onClick={() => { setScores(Array(10).fill(0)); setQ7Prevented(null) }}
         className="text-xs text-slate-400 hover:text-slate-600 underline"
       >
         Reset all
