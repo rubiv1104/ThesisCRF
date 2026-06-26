@@ -123,7 +123,22 @@ export default async function PrintCrfPage({ params }: PageProps) {
                           </div>
                         )
                       }
-                      // field row
+                      if (block.kind === 'choice') {
+                        return (
+                          <div key={bi} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+                            <span className="text-slate-600">{block.label}:</span>
+                            {block.options.map((opt, oi) => (
+                              <span
+                                key={oi}
+                                className={opt.selected ? 'font-semibold text-slate-900 underline' : 'text-slate-400'}
+                              >
+                                {opt.selected ? '☑' : '☐'} {opt.label}
+                              </span>
+                            ))}
+                          </div>
+                        )
+                      }
+                      // free-form field row
                       return (
                         <div key={bi} className="flex gap-3 text-sm">
                           <span className="w-1/2 shrink-0 text-slate-600">{block.label}</span>
@@ -140,41 +155,6 @@ export default async function PrintCrfPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Investigation reports appendix */}
-        <div className="crf-section mt-8 break-before-page">
-          <h2 className="mb-2 border-b border-slate-300 pb-1 text-sm font-bold text-slate-800">
-            Investigation Reports
-          </h2>
-          {data.investigations.length === 0 ? (
-            <p className="text-sm text-slate-400">No investigation reports uploaded.</p>
-          ) : (
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-100">
-                  <th className="border border-slate-300 px-2 py-1 text-left font-medium text-slate-600">#</th>
-                  <th className="border border-slate-300 px-2 py-1 text-left font-medium text-slate-600">File</th>
-                  <th className="border border-slate-300 px-2 py-1 text-left font-medium text-slate-600">Visit</th>
-                  <th className="border border-slate-300 px-2 py-1 text-left font-medium text-slate-600">Description</th>
-                  <th className="border border-slate-300 px-2 py-1 text-left font-medium text-slate-600">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.investigations.map((d, i) => (
-                  <tr key={d.id}>
-                    <td className="border border-slate-300 px-2 py-1 text-slate-500">{i + 1}</td>
-                    <td className="border border-slate-300 px-2 py-1 text-slate-900">{d.file_name}</td>
-                    <td className="border border-slate-300 px-2 py-1 text-slate-700">{d.visit_label ?? '—'}</td>
-                    <td className="border border-slate-300 px-2 py-1 text-slate-700">{d.description ?? '—'}</td>
-                    <td className="border border-slate-300 px-2 py-1 text-slate-700">{fmtDate(d.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <p className="no-print mt-2 text-xs text-slate-400">
-            The actual report files are attached separately in the CRF — download and print each from the Investigation Reports section, then place after this page.
-          </p>
-        </div>
       </div>
     </div>
   )

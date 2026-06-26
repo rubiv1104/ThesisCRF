@@ -3,13 +3,20 @@
  * Walks a registered CRF template + a flat values map (field_key → response)
  * into a normalised structure that both the print view (React) and the
  * Word export route (docx) render from. No React / no DOM here.
+ *
+ * Choice fields (radio / select / checkbox_group) carry ALL their options with
+ * the chosen one(s) marked — so the export reads like a filled paper proforma,
+ * not just a list of answers.
  */
 import { CRF_REGISTRY } from '../registry'
 import type { CrfField } from '../types'
 
+export type ChoiceOption = { label: string; selected: boolean }
+
 export type CrfBlock =
   | { kind: 'heading'; text: string }
   | { kind: 'field'; label: string; value: string }
+  | { kind: 'choice'; label: string; options: ChoiceOption[] }
   | { kind: 'grid'; label: string; columns: string[]; rows: { header: string; cells: string[] }[] }
 
 export interface CrfExportSection {
@@ -29,26 +36,6 @@ function toKey(name: string): string {
   return name.replace(/\s+/g, '_').toLowerCase()
 }
 
-/** Resolve a field's stored value into a human-readable display value. */
-function resolveValue(field: CrfField, values: Record<string, string>): string {
-  const raw = values[field.key] ?? ''
-  if (!raw) return ''
-
-  if ((field.type === 'radio' || field.type === 'select') && field.options) {
-    return field.options.find((o) => o.value === raw)?.label ?? raw
-  }
-  if (field.type === 'checkbox_group' && field.options) {
-    const chosen = raw.split(',').filter(Boolean)
-    const labels = field.options.filter((o) => chosen.includes(o.value)).map((o) => o.label)
-    return labels.length ? labels.join(', ') : raw
-  }
-  return raw
-}
-
-/**
- * Build the export document for a study + values map.
- * Returns null if the study has no registered template.
- */
 export function assembleCrf(studyCode: string, values: Record<string, string>): CrfExportDoc | null {
   const template = CRF_REGISTRY[studyCode]
   if (!template) return null
@@ -79,7 +66,29 @@ export function assembleCrf(studyCode: string, values: Record<string, string>): 
       if (field.dependsOn && values[field.dependsOn.key] !== field.dependsOn.value) continue
 
       const label = field.label + (field.unit ? ` (${field.unit})` : '')
-      blocks.push({ kind: 'field', label, value: resolveValue(field, values) })
+      const raw = values[field.key] ?? ''
+
+      // Choice fields: keep all options, mark the selected one(s)
+      if ((field.type === 'radio' || field.type === 'select') && field.options) {
+        blocks.push({
+          kind: 'choice',
+          label,
+          options: field.options.map((o) => ({ label: o.label, selected: o.value === raw })),
+        })
+        continue
+      }
+      if (field.type === 'checkbox_group' && field.options) {
+        const chosen = raw.split(',').filter(Boolean)
+        blocks.push({
+          kind: 'choice',
+          label,
+          options: field.options.map((o) => ({ label: o.label, selected: chosen.includes(o.value) })),
+        })
+        continue
+      }
+
+      // Free-form fields (text / number / date / textarea / calculated)
+      blocks.push({ kind: 'field', label, value: raw })
     }
 
     return { key: section.key, title: section.title, blocks }

@@ -134,46 +134,35 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
           continue
         }
 
-        // field row: "Label: value"
+        if (block.kind === 'choice') {
+          // "Label:  Opt1   ✔ Opt2   Opt3"  — selected option bold + underlined
+          const runs: TextRun[] = [new TextRun({ text: block.label + ':  ', size: 18, color: '475569' })]
+          block.options.forEach((opt, oi) => {
+            if (oi > 0) runs.push(new TextRun({ text: '    ', size: 18 }))
+            runs.push(new TextRun({
+              text: (opt.selected ? '☑ ' : '☐ ') + opt.label,
+              size: 18,
+              bold: opt.selected,
+              underline: opt.selected ? {} : undefined,
+              color: opt.selected ? '0F172A' : '94A3B8',
+            }))
+          })
+          children.push(new Paragraph({ spacing: { after: 30 }, children: runs }))
+          continue
+        }
+
+        // free-form field row: "Label: value"
         children.push(new Paragraph({
           spacing: { after: 30 },
           children: [
             new TextRun({ text: block.label + ':  ', size: 18, color: '475569' }),
-            new TextRun({ text: block.value || '—', size: 18, bold: !!block.value }),
+            new TextRun({ text: block.value || '__________', size: 18, bold: !!block.value }),
           ],
         }))
       }
     })
   } else {
     children.push(new Paragraph({ children: [new TextRun({ text: `No template registered for ${data.studyCode}.`, size: 18 })] }))
-  }
-
-  // Investigation reports appendix
-  children.push(new Paragraph({
-    heading: HeadingLevel.HEADING_2,
-    pageBreakBefore: true,
-    spacing: { after: 100 },
-    children: [new TextRun({ text: 'Investigation Reports', bold: true, size: 22, color: '1E293B' })],
-  }))
-
-  if (data.investigations.length === 0) {
-    children.push(new Paragraph({ children: [new TextRun({ text: 'No investigation reports uploaded.', size: 18, color: '94A3B8' })] }))
-  } else {
-    const w = [600, 3360, 2000, 2400, 1000]
-    const headerRow = new TableRow({ children: [
-      labelCell('#', w[0]!), labelCell('File', w[1]!), labelCell('Visit', w[2]!),
-      labelCell('Description', w[3]!), labelCell('Date', w[4]!),
-    ] })
-    const rows = data.investigations.map((d, i) => new TableRow({ children: [
-      valueCell(String(i + 1), w[0]!), valueCell(d.file_name, w[1]!),
-      valueCell(d.visit_label ?? '—', w[2]!), valueCell(d.description ?? '—', w[3]!),
-      valueCell(fmtDate(d.created_at), w[4]!),
-    ] }))
-    children.push(new Table({ width: { size: 9360, type: WidthType.DXA }, columnWidths: w, rows: [headerRow, ...rows] }))
-    children.push(new Paragraph({
-      spacing: { before: 100 },
-      children: [new TextRun({ text: 'Note: the actual report files are stored separately in the CRF — download and append each after this page.', size: 16, italics: true, color: '94A3B8' })],
-    }))
   }
 
   const document = new Document({
