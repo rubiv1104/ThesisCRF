@@ -13,6 +13,7 @@ const CLDQ_OPTIONS = [
 export const FLD2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'FLD2026',
   version: '1.0',
+  visitSchedule: ['BT (Baseline)', 'Visit 1', 'Visit 2', 'Visit 3', 'Visit 4', 'Visit 5', 'Visit 6', 'AT'],
   sections: [
     // 1. ENROLLMENT
     {

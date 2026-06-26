@@ -3,6 +3,7 @@ import type { CrfTemplateDef } from '../types'
 export const AST2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'AST2026',
   version: '1.0',
+  visitSchedule: ['Day 0 (BT)', 'Day 7', 'Day 14', 'Day 30', 'Day 45', 'Day 60', 'Day 90 (AT)'],
   sections: [
     // 1. STUDY INFORMATION
     {

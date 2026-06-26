@@ -3,6 +3,7 @@ import type { CrfTemplateDef } from '../types'
 export const SHP2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'SHP2026',
   version: '1.0',
+  visitSchedule: ['Day 0 (Baseline)', 'Day 7', 'Day 14', 'Day 21', 'Day 43', 'Day 58', 'Day 73', 'Day 90 (AT)'],
   sections: [
     // 1. STUDY INFORMATION
     {

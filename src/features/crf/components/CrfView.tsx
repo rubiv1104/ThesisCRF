@@ -320,8 +320,9 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
   )
 
   // Visit-based filtering — must be before any early returns (Rules of Hooks)
-  const visitSectionKeys = visitId === 'all' ? undefined : VISIT_SECTIONS[visitId]
-  const fieldFilter = useMemo(() => buildFieldFilter(visitId), [visitId])
+  // Studies with visitSchedule show all sections at once (no day-specific filtering)
+  const visitSectionKeys = (template?.visitSchedule || visitId === 'all') ? undefined : VISIT_SECTIONS[visitId]
+  const fieldFilter = useMemo(() => template?.visitSchedule ? undefined : buildFieldFilter(visitId), [visitId, template])
   const currentVisitTab = VISIT_TABS.find((v) => v.id === visitId)
 
   if (!template) {
@@ -351,28 +352,42 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         {!readOnly && <SaveIndicator status={saveStatus} />}
       </div>
 
-      {/* Visit selector */}
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-        <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">Select visit</p>
-        <div className="flex flex-wrap gap-1.5">
-          {VISIT_TABS.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setVisitId(v.id)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                visitId === v.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              {v.short}
-            </button>
-          ))}
+      {/* Visit selector — ECZ2026 gets day-specific tabs; other studies show their actual schedule */}
+      {template.visitSchedule ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">Visit schedule</p>
+          <div className="flex flex-wrap gap-1.5">
+            {template.visitSchedule.map((label, i) => (
+              <span key={i} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
+                {label}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-slate-500">All sections are shown below. Assessment grids capture data across all visits.</p>
         </div>
-        {currentVisitTab && (
-          <p className="mt-2 text-[11px] text-slate-500">{currentVisitTab.desc}</p>
-        )}
-      </div>
+      ) : (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">Select visit</p>
+          <div className="flex flex-wrap gap-1.5">
+            {VISIT_TABS.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setVisitId(v.id)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  visitId === v.id
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {v.short}
+              </button>
+            ))}
+          </div>
+          {currentVisitTab && (
+            <p className="mt-2 text-[11px] text-slate-500">{currentVisitTab.desc}</p>
+          )}
+        </div>
+      )}
 
       <CrfSectionAccordion
         key={visitId}

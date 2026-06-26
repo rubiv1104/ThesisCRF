@@ -6,6 +6,7 @@ import type { CrfTemplateDef } from '../types'
 export const HTN2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'HTN2026',
   version: '1.0',
+  visitSchedule: ['BT (Baseline)', '1st Follow-up', '2nd Follow-up', '3rd Follow-up', '4th Follow-up', '5th Follow-up', '6th Follow-up', 'AT'],
   sections: [
     // 1. STUDY INFORMATION
     {

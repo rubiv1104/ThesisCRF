@@ -7,6 +7,7 @@ import type { CrfTemplateDef } from '../types'
 export const HYP2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'HYP2026',
   version: '1.0',
+  visitSchedule: ['Basal (BT)', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit (AT)'],
   sections: [
     // 1. STUDY INFORMATION
     {

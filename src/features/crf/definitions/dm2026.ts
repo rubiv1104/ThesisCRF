@@ -3,6 +3,7 @@ import type { CrfTemplateDef } from '../types'
 export const DM2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'DM2026',
   version: '1.0',
+  visitSchedule: ['BT (Baseline)', 'Week 4', 'Week 8', 'Week 12 (AT)'],
   sections: [
     // 1. STUDY INFORMATION
     {

@@ -54,4 +54,6 @@ export interface CrfTemplateDef {
   study_code: string
   version: string
   sections: CrfSectionDef[]
+  /** Visit schedule labels shown as info panel. If absent, ECZ2026-style 15-day tab navigation is used. */
+  visitSchedule?: string[]
 }

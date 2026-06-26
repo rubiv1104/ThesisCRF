@@ -3,6 +3,7 @@ import type { CrfTemplateDef } from '../types'
 export const DMA2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'DMA2026',
   version: '1.0',
+  visitSchedule: ['Day 0 (Basal)', 'Day 14 (1st Visit)', 'Day 28 (2nd Visit)', 'Day 42 (3rd Visit)', 'Day 56 (4th Visit)', 'Day 70 (5th Visit)', 'Day 84 (6th Visit / AT)'],
   sections: [
     // 1. ENROLLMENT
     {
