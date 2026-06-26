@@ -398,6 +398,7 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         suggestions={suggestions}
         visitSectionKeys={visitSectionKeys}
         fieldFilter={fieldFilter}
+        openAll={readOnly}
       />
     </div>
   )

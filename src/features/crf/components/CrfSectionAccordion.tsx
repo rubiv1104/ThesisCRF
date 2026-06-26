@@ -20,6 +20,8 @@ interface CrfSectionAccordionProps {
   visitSectionKeys?: string[]
   /** When set, hides individual fields that don't match the current visit */
   fieldFilter?: (sectionKey: string, fieldKey: string, fieldType: string) => boolean
+  /** Expand all sections by default (used in readOnly/guide review mode) */
+  openAll?: boolean
 }
 
 export function CrfSectionAccordion({
@@ -30,14 +32,14 @@ export function CrfSectionAccordion({
   suggestions = {},
   visitSectionKeys,
   fieldFilter,
+  openAll = false,
 }: CrfSectionAccordionProps) {
   const visibleSections = visitSectionKeys
     ? sections.filter((s) => visitSectionKeys.includes(s.key))
     : sections
 
-  // When a specific visit is selected, expand all sections by default so the
-  // investigator sees the EASI grid immediately without needing extra clicks.
-  const defaultOpen = visitSectionKeys ? visibleSections.map((s) => s.key) : []
+  // Expand all when: a specific visit is selected, or openAll is requested (readOnly/guide mode)
+  const defaultOpen = (visitSectionKeys || openAll) ? visibleSections.map((s) => s.key) : []
 
   return (
     <Accordion className="w-full space-y-2" defaultValue={defaultOpen}>

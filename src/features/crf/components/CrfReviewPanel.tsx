@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import { CheckCircle2, XCircle, MessageSquare, Trash2, Loader2, RotateCcw } from 'lucide-react'
 
 interface Correction {
@@ -26,22 +25,14 @@ interface Props {
   validatedAt: string | null
 }
 
-const VALIDATION_OPTIONS = [
-  { value: 'approved', label: 'Approve CRF', icon: CheckCircle2, color: 'bg-green-600 hover:bg-green-700 text-white' },
-  { value: 'returned', label: 'Return for Correction', icon: XCircle, color: 'bg-red-500 hover:bg-red-600 text-white' },
-  { value: 'pending', label: 'Reset to Pending', icon: RotateCcw, color: 'bg-slate-200 hover:bg-slate-300 text-slate-700' },
-]
-
 export function CrfReviewPanel({
   patientId, crfId, teacherId, teacherName,
   currentValidationStatus, currentValidationNote, validatedAt,
 }: Props) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
   const [corrections, setCorrections] = useState<Correction[]>([])
   const [loadingCorrections, setLoadingCorrections] = useState(true)
   const [newSection, setNewSection] = useState('')
-  const [newField, setNewField] = useState('')
   const [newNote, setNewNote] = useState('')
   const [addingCorrection, setAddingCorrection] = useState(false)
   const [validationStatus, setValidationStatus] = useState(currentValidationStatus)
@@ -61,20 +52,20 @@ export function CrfReviewPanel({
 
   useEffect(() => { loadCorrections() }, [crfId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function addCorrection() {
-    if (!newNote.trim() || !newSection.trim()) {
-      toast.error('Section and correction note are required.')
+  async function addComment() {
+    if (!newNote.trim()) {
+      toast.error('Please enter a comment.')
       return
     }
     if (!crfId) {
-      toast.error('CRF not found for this patient. Open the CRF first to initialise it.')
+      toast.error('CRF not found for this patient.')
       return
     }
     setAddingCorrection(true)
     const { error } = await supabase.from('crf_corrections').insert({
       crf_id: crfId,
-      section_key: newSection.trim(),
-      field_key: newField.trim() || null,
+      section_key: newSection.trim() || 'General',
+      field_key: null,
       correction: newNote.trim(),
       corrected_by: teacherId,
       corrector_name: teacherName,
@@ -82,24 +73,24 @@ export function CrfReviewPanel({
     })
     setAddingCorrection(false)
     if (error) { toast.error('Failed: ' + error.message); return }
-    toast.success('Correction added.')
+    toast.success('Comment added.')
     setNewNote('')
-    setNewField('')
+    setNewSection('')
     await loadCorrections()
   }
 
-  async function resolveCorrection(id: string) {
+  async function resolveComment(id: string) {
     await supabase.from('crf_corrections').update({ status: 'resolved', updated_at: new Date().toISOString() }).eq('id', id)
     await loadCorrections()
   }
 
-  async function deleteCorrection(id: string) {
+  async function deleteComment(id: string) {
     await supabase.from('crf_corrections').delete().eq('id', id)
     await loadCorrections()
   }
 
   async function saveValidation(status: string) {
-    if (!crfId) { toast.error('CRF not initialised yet.'); return }
+    if (!crfId) { toast.error('No CRF record found for this patient.'); return }
     setSavingValidation(true)
     const { error } = await supabase
       .from('crfs')
@@ -114,25 +105,26 @@ export function CrfReviewPanel({
     if (error) { toast.error('Failed: ' + error.message); return }
     setValidationStatus(status)
     toast.success(
-      status === 'approved' ? 'CRF approved!' :
-      status === 'returned' ? 'CRF returned for correction.' :
-      'Status reset to pending.'
+      status === 'approved' ? 'CRF approved and student notified.' :
+      status === 'returned' ? 'CRF returned to student for correction.' :
+      'Status reset.'
     )
   }
 
-  const openCorrections = corrections.filter((c) => c.status === 'open')
-  const resolvedCorrections = corrections.filter((c) => c.status === 'resolved')
+  const openComments = corrections.filter((c) => c.status === 'open')
+  const resolvedComments = corrections.filter((c) => c.status === 'resolved')
 
   return (
     <div className="space-y-4">
-      {/* Validation panel */}
+
+      {/* ── Approve / Return panel ── */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-800">CRF Validation</h2>
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
-            validationStatus === 'approved' ? 'bg-green-50 text-green-700' :
-            validationStatus === 'returned' ? 'bg-red-50 text-red-600' :
-            'bg-amber-50 text-amber-600'
+          <h2 className="text-base font-semibold text-slate-800">Guide Review &amp; Decision</h2>
+          <span className={`rounded-full px-3 py-0.5 text-xs font-semibold capitalize ${
+            validationStatus === 'approved' ? 'bg-green-50 text-green-700 ring-1 ring-green-200' :
+            validationStatus === 'returned' ? 'bg-red-50 text-red-600 ring-1 ring-red-200' :
+            'bg-amber-50 text-amber-600 ring-1 ring-amber-200'
           }`}>
             {validationStatus === 'pending' ? 'Pending Review' : validationStatus}
           </span>
@@ -144,139 +136,146 @@ export function CrfReviewPanel({
           </p>
         )}
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-600">Validation Note (shown to investigator)</label>
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-slate-600">
+            Overall note to student <span className="text-slate-400 font-normal">(shown when you approve or return)</span>
+          </label>
           <textarea
             rows={3}
-            className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-            placeholder="Overall comments for the investigator, e.g. 'CRF complete and data verified. Approved.' or 'Section 3 values need correction.'"
+            className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="e.g. 'CRF data is complete and verified. Approved.' or 'Please correct the EASI scores for Day 45 — values seem incorrect.'"
             value={validationNote}
             onChange={(e) => setValidationNote(e.target.value)}
           />
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {VALIDATION_OPTIONS.map((opt) => {
-            const Icon = opt.icon
-            const isCurrent = validationStatus === opt.value
-            return (
-              <Button
-                key={opt.value}
-                className={opt.color}
-                disabled={savingValidation || isCurrent}
-                onClick={() => saveValidation(opt.value)}
-                size="sm"
-              >
-                {savingValidation
-                  ? <Loader2 size={14} className="mr-1.5 animate-spin" />
-                  : <Icon size={14} className="mr-1.5" />
-                }
-                {opt.label}
-                {isCurrent && ' ✓'}
-              </Button>
-            )
-          })}
+          <button
+            disabled={savingValidation || validationStatus === 'approved'}
+            onClick={() => saveValidation('approved')}
+            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+          >
+            {savingValidation ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+            Approve CRF {validationStatus === 'approved' && '✓'}
+          </button>
+          <button
+            disabled={savingValidation || validationStatus === 'returned'}
+            onClick={() => saveValidation('returned')}
+            className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+          >
+            {savingValidation ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+            Return for Correction {validationStatus === 'returned' && '✓'}
+          </button>
+          {(validationStatus === 'approved' || validationStatus === 'returned') && (
+            <button
+              disabled={savingValidation}
+              onClick={() => saveValidation('pending')}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+            >
+              <RotateCcw size={14} />
+              Reset to Pending
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Corrections panel */}
+      {/* ── Comments panel ── */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Corrections & Annotations
-          </h2>
-          {openCorrections.length > 0 && (
+          <div>
+            <h2 className="text-sm font-semibold text-slate-800">Comments &amp; Corrections</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Add notes about specific sections. Student sees these when the CRF is returned.</p>
+          </div>
+          {openComments.length > 0 && (
             <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">
-              {openCorrections.length} open
+              {openComments.length} open
             </span>
           )}
         </div>
 
-        {/* Add correction form */}
+        {/* Add comment form */}
         <div className="p-5 border-b border-slate-100 space-y-3">
-          <p className="text-xs font-medium text-slate-600">Add Correction / Annotation</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-xs text-slate-500">Section</label>
-              <input
-                type="text"
-                placeholder="e.g. Chief Complaints, Investigations"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-                value={newSection}
-                onChange={(e) => setNewSection(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-slate-500">Field / Parameter (optional)</label>
-              <input
-                type="text"
-                placeholder="e.g. HbA1c, Pulse Rate"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-                value={newField}
-                onChange={(e) => setNewField(e.target.value)}
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">
+              Section <span className="text-slate-400 font-normal">(optional — e.g. "Investigations", "EASI Scoring")</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Which section does this comment relate to?"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={newSection}
+              onChange={(e) => setNewSection(e.target.value)}
+            />
           </div>
-          <div className="space-y-1">
-            <label className="text-xs text-slate-500">Correction Note <span className="text-red-500">*</span></label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600">
+              Comment <span className="text-red-500">*</span>
+            </label>
             <textarea
-              rows={2}
-              className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-              placeholder="Describe what needs to be corrected or clarified..."
+              rows={3}
+              className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Describe what needs to be checked or corrected by the student…"
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
             />
           </div>
-          <Button size="sm" onClick={addCorrection} disabled={addingCorrection}>
-            {addingCorrection
-              ? <Loader2 size={14} className="mr-1.5 animate-spin" />
-              : <MessageSquare size={14} className="mr-1.5" />
-            }
-            Add Correction
-          </Button>
+          <button
+            onClick={addComment}
+            disabled={addingCorrection || !newNote.trim()}
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {addingCorrection ? <Loader2 size={14} className="animate-spin" /> : <MessageSquare size={14} />}
+            Add Comment
+          </button>
         </div>
 
-        {/* Corrections list */}
+        {/* Comments list */}
         {loadingCorrections ? (
           <div className="flex items-center gap-2 px-5 py-4 text-sm text-slate-400">
             <Loader2 size={14} className="animate-spin" /> Loading…
           </div>
         ) : corrections.length === 0 ? (
-          <div className="px-5 py-6 text-center text-sm text-slate-400">
-            No corrections yet. CRF looks good!
+          <div className="px-5 py-8 text-center">
+            <p className="text-sm text-slate-400">No comments yet.</p>
+            <p className="text-xs text-slate-300 mt-0.5">Add a comment above to flag something for the student.</p>
           </div>
         ) : (
           <ul className="divide-y divide-slate-50">
-            {[...openCorrections, ...resolvedCorrections].map((c) => (
-              <li key={c.id} className={`px-5 py-3 flex items-start gap-3 ${c.status === 'resolved' ? 'opacity-50' : ''}`}>
+            {[...openComments, ...resolvedComments].map((c) => (
+              <li key={c.id} className={`px-5 py-4 flex items-start gap-3 ${c.status === 'resolved' ? 'opacity-50' : ''}`}>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-semibold text-slate-700">{c.section_key}</span>
-                    {c.field_key && (
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">{c.field_key}</span>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    {c.section_key && c.section_key !== 'General' && (
+                      <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{c.section_key}</span>
                     )}
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      c.status === 'resolved' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                      c.status === 'resolved' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-700'
                     }`}>
                       {c.status}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-slate-700">{c.correction}</p>
-                  <p className="mt-0.5 text-xs text-slate-400">
+                  <p className="text-sm text-slate-800">{c.correction}</p>
+                  <p className="mt-1 text-xs text-slate-400">
                     {c.corrector_name} · {new Date(c.created_at).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   {c.status === 'open' && (
-                    <Button variant="ghost" size="sm" onClick={() => resolveCorrection(c.id)} title="Mark resolved"
-                      className="text-green-600 hover:bg-green-50">
-                      <CheckCircle2 size={15} />
-                    </Button>
+                    <button
+                      onClick={() => resolveComment(c.id)}
+                      title="Mark as resolved"
+                      className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-50 transition-colors"
+                    >
+                      <CheckCircle2 size={13} /> Resolve
+                    </button>
                   )}
-                  <Button variant="ghost" size="sm" onClick={() => deleteCorrection(c.id)} title="Delete"
-                    className="text-red-400 hover:bg-red-50 hover:text-red-600">
-                    <Trash2 size={15} />
-                  </Button>
+                  <button
+                    onClick={() => deleteComment(c.id)}
+                    title="Delete comment"
+                    className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
               </li>
             ))}
