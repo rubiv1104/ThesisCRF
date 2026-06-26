@@ -6,6 +6,7 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { assembleCrf } from '@/features/crf/export/assembleCrf'
 import { loadCrfData } from '@/features/crf/export/loadCrfData'
+import { buildEcz2026Body } from '@/features/crf/export/ecz2026Docx'
 
 const BORDER = { style: BorderStyle.SINGLE, size: 1, color: 'BBBBBB' }
 const CELL_BORDERS = { top: BORDER, bottom: BORDER, left: BORDER, right: BORDER }
@@ -45,6 +46,12 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const data = await loadCrfData(supabase, id)
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // ECZ2026 has a faithful, study-specific proforma rebuild
+  if (data.studyCode === 'ECZ2026') {
+    const body = buildEcz2026Body(data.values, data.patient)
+    return packDocx(body, data.studyCode, data.patient.study_patient_id)
+  }
 
   const doc = assembleCrf(data.studyCode, data.values)
 
@@ -165,6 +172,10 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     children.push(new Paragraph({ children: [new TextRun({ text: `No template registered for ${data.studyCode}.`, size: 18 })] }))
   }
 
+  return packDocx(children, data.studyCode, data.patient.study_patient_id)
+}
+
+async function packDocx(children: (Paragraph | Table)[], studyCode: string, patientId: string) {
   const document = new Document({
     styles: { default: { document: { run: { font: 'Calibri', size: 18 } } } },
     sections: [{
@@ -174,7 +185,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   })
 
   const buffer = await Packer.toBuffer(document)
-  const safeName = `${data.studyCode}_${data.patient.study_patient_id}`.replace(/[^a-zA-Z0-9_-]/g, '_')
+  const safeName = `${studyCode}_${patientId}`.replace(/[^a-zA-Z0-9_-]/g, '_')
 
   return new NextResponse(buffer as any, {
     status: 200,
