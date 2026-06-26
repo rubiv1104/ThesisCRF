@@ -363,14 +363,18 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         {!readOnly && (
           <div className="flex items-center gap-2">
             <SaveIndicator status={saveStatus} />
-            {saveStatus === 'unsaved' && (
-              <button
-                onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); flushPending() }}
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
-              >
-                Save
-              </button>
-            )}
+            <button
+              onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); flushPending() }}
+              disabled={saveStatus !== 'unsaved'}
+              title={saveStatus === 'unsaved' ? 'Save your changes now' : 'All changes saved automatically'}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                saveStatus === 'unsaved'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-slate-100 text-slate-400 cursor-default'
+              }`}
+            >
+              {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'unsaved' ? 'Save' : 'Saved'}
+            </button>
           </div>
         )}
       </div>
