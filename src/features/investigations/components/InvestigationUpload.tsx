@@ -142,6 +142,7 @@ export function InvestigationUpload({ patientId, patientName }: InvestigationUpl
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={visitLabel}
               onChange={(e) => setVisitLabel(e.target.value)}
+              suppressHydrationWarning
             >
               {VISIT_OPTIONS.map((v) => (
                 <option key={v} value={v}>{v}</option>
@@ -157,6 +158,7 @@ export function InvestigationUpload({ patientId, patientName }: InvestigationUpl
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              suppressHydrationWarning
             />
           </div>
         </div>
