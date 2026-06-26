@@ -32,7 +32,7 @@ const INVESTIGATOR_NAV = [
 ]
 
 const TEACHER_NAV = [
-  { label: 'My Students\' CRFs', href: '/teacher', icon: GraduationCap },
+  { label: 'Students\' CRFs', href: '/teacher', icon: GraduationCap },
   { label: 'CRF Review', href: '/teacher/review', icon: BookOpenCheck },
   { label: 'Master Chart', href: '/master-chart', icon: TableProperties },
   { label: 'Assessments & Scales', href: '/assessments', icon: Scale },
