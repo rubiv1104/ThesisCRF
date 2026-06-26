@@ -42,7 +42,7 @@ export function CrfStatusBanner({ patientId, validationStatus, validationNote, v
         <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-green-600" />
         <div>
           <p className="font-semibold text-green-800">CRF Approved by Guide</p>
-          {dateStr && <p className="text-xs text-green-600 mt-0.5">Approved on {dateStr}</p>}
+          {dateStr && <p className="text-xs text-green-600 mt-0.5">Approved on {dateStr} · CRF is now locked and cannot be edited</p>}
           {validationNote && (
             <p className="mt-2 text-sm text-green-700 bg-green-100 rounded-lg px-3 py-2">
               {validationNote}

@@ -93,8 +93,13 @@ export default async function CrfPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* CRF form */}
-      <CrfView patientId={id} studyCode={studyCode} excelData={excelData} readOnly={isReadOnly} />
+      {/* CRF form — locked once approved */}
+      <CrfView
+        patientId={id}
+        studyCode={studyCode}
+        excelData={excelData}
+        readOnly={isReadOnly || crfData?.validation_status === 'approved'}
+      />
 
       {/* Investigation documents */}
       <div className="mt-8 border-t border-slate-200 pt-6">
