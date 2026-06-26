@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
 import { DurationEditor } from './DurationEditor'
+import { StudyStatusButton } from './StudyStatusButton'
 
 export const metadata = { title: `Admin Overview | ${APP_NAME}` }
 
@@ -142,7 +143,7 @@ export default async function AdminPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Link
                         href="/admin/patients"
                         className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
@@ -155,6 +156,11 @@ export default async function AdminPage() {
                       >
                         Template
                       </Link>
+                      <StudyStatusButton
+                        studyId={s.id}
+                        studyCode={s.study_code}
+                        currentStatus={s.study_status}
+                      />
                     </div>
                   </td>
                 </tr>
