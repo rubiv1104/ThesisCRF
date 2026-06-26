@@ -58,35 +58,41 @@ function PatientRow({ p }: { p: Patient }) {
   )
 }
 
-function GroupedView({ patients }: { patients: Patient[] }) {
-  // Group by study_code
-  const byStudy: Record<string, Patient[]> = {}
-  for (const p of patients) {
-    ;(byStudy[p.study_code] ??= []).push(p)
-  }
-  const studyCodes = Object.keys(byStudy).sort()
+type StudyEntry = { code: string; title: string; investigator: string | null; patients: Patient[] }
+type GroupEntry = { name: string; patients: Patient[] }
 
+function GroupedView({ patients }: { patients: Patient[] }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   function toggle(key: string) {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
+  // Build study → group structure using Maps to avoid index-access TS issues
+  const studyMap = new Map<string, StudyEntry>()
+  for (const p of patients) {
+    let entry = studyMap.get(p.study_code)
+    if (!entry) {
+      entry = { code: p.study_code, title: p.study_title, investigator: p.investigator_name, patients: [] }
+      studyMap.set(p.study_code, entry)
+    }
+    entry.patients.push(p)
+  }
+  const studies: StudyEntry[] = Array.from(studyMap.values()).sort((a, b) => a.code.localeCompare(b.code))
+
   return (
     <div className="space-y-4">
-      {studyCodes.map((code) => {
-        const studyPatients = byStudy[code]
-        const investigator = studyPatients[0]?.investigator_name
-        const studyTitle = studyPatients[0]?.study_title
-
+      {studies.map(({ code, title: studyTitle, investigator, patients: studyPatients }) => {
         // Group within study by group_name
-        const byGroup: Record<string, Patient[]> = {}
+        const groupMap = new Map<string, GroupEntry>()
         for (const p of studyPatients) {
           const g = p.group_name ?? 'Unassigned'
-          ;(byGroup[g] ??= []).push(p)
+          let grp = groupMap.get(g)
+          if (!grp) { grp = { name: g, patients: [] }; groupMap.set(g, grp) }
+          grp.patients.push(p)
         }
-        const groups = Object.keys(byGroup).sort()
+        const groups: GroupEntry[] = Array.from(groupMap.values()).sort((a, b) => a.name.localeCompare(b.name))
 
-        const isCollapsed = collapsed[code]
+        const isCollapsed = collapsed[code] ?? false
 
         return (
           <div key={code} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -122,8 +128,7 @@ function GroupedView({ patients }: { patients: Patient[] }) {
 
             {!isCollapsed && (
               <div className="border-t border-slate-100">
-                {groups.map((groupName) => {
-                  const groupPatients = byGroup[groupName]
+                {groups.map(({ name: groupName, patients: groupPatients }) => {
                   const isGroupA = groupName === 'Group A'
                   const isGroupB = groupName === 'Group B'
 
