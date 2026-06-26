@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { submitCrfForReview } from '@/app/(app)/patients/[id]/crf/actions'
-import { CheckCircle2, Clock, AlertTriangle, Send, Loader2, XCircle } from 'lucide-react'
+import { submitCrfForReview, recallCrfSubmission } from '@/app/(app)/patients/[id]/crf/actions'
+import { CheckCircle2, Clock, AlertTriangle, Send, Loader2, XCircle, Undo2 } from 'lucide-react'
 
 interface Props {
   patientId: string
@@ -20,6 +20,14 @@ export function CrfStatusBanner({ patientId, validationStatus, validationNote, v
     setFeedback('')
     startTransition(async () => {
       const res = await submitCrfForReview(patientId)
+      if ('error' in res) setFeedback(res.error)
+    })
+  }
+
+  function handleRecall() {
+    setFeedback('')
+    startTransition(async () => {
+      const res = await recallCrfSubmission(patientId)
       if ('error' in res) setFeedback(res.error)
     })
   }
@@ -75,15 +83,27 @@ export function CrfStatusBanner({ patientId, validationStatus, validationNote, v
 
   if (status === 'submitted') {
     return (
-      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
-        <Clock size={20} className="mt-0.5 shrink-0 text-amber-500" />
-        <div>
-          <p className="font-semibold text-amber-800">Submitted — Awaiting Guide Review</p>
-          {dateStr && <p className="text-xs text-amber-600 mt-0.5">Submitted on {dateStr}</p>}
-          <p className="text-xs text-amber-600 mt-1">
-            Your guide will review and either approve or return with corrections.
-          </p>
+      <div className="space-y-2">
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <Clock size={20} className="mt-0.5 shrink-0 text-amber-500" />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800">Submitted — Awaiting Guide Review</p>
+            {dateStr && <p className="text-xs text-amber-600 mt-0.5">Submitted on {dateStr}</p>}
+            <p className="text-xs text-amber-600 mt-1">
+              Your guide will review and either approve or return with corrections.
+            </p>
+          </div>
+          <button
+            onClick={handleRecall}
+            disabled={pending}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-60 transition-colors"
+            title="Recall submission to make edits"
+          >
+            {pending ? <Loader2 size={12} className="animate-spin" /> : <Undo2 size={12} />}
+            Recall
+          </button>
         </div>
+        {feedback && <p className="text-xs text-red-600">{feedback}</p>}
       </div>
     )
   }

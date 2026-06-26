@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
 import { ChevronLeft } from 'lucide-react'
+import { DeletePatientButton } from './DeletePatientButton'
 
 export const metadata = { title: `All Patients | ${APP_NAME}` }
 
@@ -136,12 +137,15 @@ export default async function AdminPatientsPage() {
                           </span>
                         </td>
                         <td className="px-5 py-2.5">
-                          <Link
-                            href={`/patients/${p.id}/crf`}
-                            className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
-                          >
-                            Open CRF
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/patients/${p.id}/crf`}
+                              className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+                            >
+                              Open CRF
+                            </Link>
+                            <DeletePatientButton patientId={p.id} patientName={p.patient_name} />
+                          </div>
                         </td>
                       </tr>
                     )
