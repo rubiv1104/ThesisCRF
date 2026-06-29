@@ -9,7 +9,6 @@
  * not just a list of answers.
  */
 import { CRF_REGISTRY } from '../registry'
-import type { CrfField } from '../types'
 
 export type ChoiceOption = { label: string; selected: boolean }
 

@@ -44,7 +44,7 @@ export default async function DashboardPage() {
 
   // CRF validation status for each patient
   const patientIds = patients.map((p) => p.id)
-  let crfStatuses: Record<string, string> = {}
+  const crfStatuses: Record<string, string> = {}
   if (patientIds.length > 0) {
     const { data: crfsData } = await supabase
       .from('crfs')

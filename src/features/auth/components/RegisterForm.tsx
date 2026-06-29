@@ -45,6 +45,12 @@ export function RegisterForm({ role, studies = [] }: RegisterFormProps) {
 
   async function onSubmit(values: RegisterFormValues) {
     setServerError(null)
+
+    if (isInvestigator && !values.studyCode) {
+      form.setError('studyCode', { message: 'Please select your study to continue.' })
+      return
+    }
+
     setLoading(true)
 
     try {

@@ -10,6 +10,7 @@ import {
   Paragraph, TextRun, Table, TableRow, TableCell,
   WidthType, BorderStyle, ShadingType, AlignmentType,
 } from 'docx'
+import { DEPARTMENT, getStudyMeta, studyTitle } from '../studyMeta'
 
 type Vals = Record<string, string>
 
@@ -134,9 +135,13 @@ export function buildEcz2026Body(v: Vals, patient: Ecz2026Patient): (Paragraph |
   const ageStr = patient.age != null ? String(patient.age) : ''
 
   // ── Title block ──
+  out.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 20 }, children: [run(DEPARTMENT.toUpperCase(), { bold: true, size: 18, color: '64748B' })] }))
   out.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40 }, children: [run('RESEARCH PROFORMA', { bold: true, size: 28 })] }))
+  out.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [
+    run(studyTitle('ECZ2026'), { bold: true, size: 18, color: '334155' }),
+  ] }))
   out.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 160 }, children: [
-    run('EFFICACY OF EKVIMSHATI GUGGULU AND KHADIRASHTHAK KWATHA IN COMBINATION WITH DURVADYA TAILA IN THE MANAGEMENT OF VICHARCHIKA w.s.r. ECZEMA: AN OPEN-LABEL RANDOMIZED COMPARATIVE STUDY', { bold: true, size: 18, color: '334155' }),
+    run(`${getStudyMeta('ECZ2026').scholar} · Batch ${getStudyMeta('ECZ2026').batch}`, { size: 16, color: '64748B' }),
   ] }))
 
   out.push(line('IEC no.', v['iec_number'] ?? ''))

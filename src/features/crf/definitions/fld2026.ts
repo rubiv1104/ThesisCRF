@@ -1,15 +1,5 @@
 import type { CrfTemplateDef } from '../types'
 
-const CLDQ_OPTIONS = [
-  { value: '7', label: 'All of the time' },
-  { value: '6', label: 'Most of the time' },
-  { value: '5', label: 'A good bit of the time' },
-  { value: '4', label: 'Some of the time' },
-  { value: '3', label: 'A little of the time' },
-  { value: '2', label: 'Hardly any of the time' },
-  { value: '1', label: 'None of the time' },
-]
-
 export const FLD2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'FLD2026',
   version: '1.0',

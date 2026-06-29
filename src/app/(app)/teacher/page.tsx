@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
+import { expectedSlots } from '@/features/crf/studyMeta'
 
 export const metadata = { title: `Guide Dashboard | ${APP_NAME}` }
 
@@ -38,6 +39,16 @@ export default async function TeacherDashboardPage() {
   const { data: crfsRaw } = patients.length > 0
     ? await (supabase as any).from('crfs').select('patient_id, validation_status').in('patient_id', patients.map((p: any) => p.id))
     : { data: [] }
+
+  // Filled-response counts → completion %
+  const { data: fillRaw } = await (supabase as any).rpc('crf_fill_counts')
+  const fillMap: Record<string, number> = {}
+  for (const f of (fillRaw ?? []) as any[]) fillMap[f.patient_id] = f.filled ?? 0
+  function fillPercent(p: any): number {
+    const code = (p.studies as any)?.study_code ?? ''
+    const expected = expectedSlots(code)
+    return expected > 0 ? Math.min(100, Math.round(((fillMap[p.id] ?? 0) / expected) * 100)) : 0
+  }
 
   const crfs = (crfsRaw ?? []) as any[]
   const validatedCount = crfs.filter((c: any) => c.validation_status === 'approved').length
@@ -150,6 +161,7 @@ export default async function TeacherDashboardPage() {
                 <th className="px-5 py-3 text-left font-medium">Study</th>
                 <th className="px-5 py-3 text-left font-medium">Group</th>
                 <th className="px-5 py-3 text-left font-medium">Investigator</th>
+                <th className="px-5 py-3 text-left font-medium">CRF Filled</th>
                 <th className="px-5 py-3 text-left font-medium">CRF Status</th>
                 <th className="px-5 py-3 text-left font-medium">Review</th>
               </tr>
@@ -180,6 +192,20 @@ export default async function TeacherDashboardPage() {
                     <td className="px-5 py-3">
                       <div className="text-xs font-medium text-slate-800">{(p.user_profiles as any)?.full_name ?? '—'}</div>
                       <div className="text-[11px] text-slate-400">{(p.user_profiles as any)?.email ?? ''}</div>
+                    </td>
+                    <td className="px-5 py-3">
+                      {(() => {
+                        const pct = fillPercent(p)
+                        const c = pct >= 90 ? 'bg-green-500' : pct >= 50 ? 'bg-blue-500' : pct >= 20 ? 'bg-amber-500' : 'bg-slate-300'
+                        return (
+                          <div className="flex items-center gap-2 min-w-[90px]">
+                            <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                              <div className={`h-full rounded-full ${c}`} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs font-medium tabular-nums text-slate-600">{pct}%</span>
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className="px-5 py-3">
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${

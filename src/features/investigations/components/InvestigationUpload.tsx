@@ -40,7 +40,7 @@ function fmtSize(bytes: number | null) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
-export function InvestigationUpload({ patientId, patientName, readOnly = false }: InvestigationUploadProps) {
+export function InvestigationUpload({ patientId, patientName: _patientName, readOnly = false }: InvestigationUploadProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
   const fileRef = useRef<HTMLInputElement>(null)

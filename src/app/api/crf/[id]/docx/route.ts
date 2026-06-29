@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { assembleCrf } from '@/features/crf/export/assembleCrf'
 import { loadCrfData } from '@/features/crf/export/loadCrfData'
 import { buildEcz2026Body } from '@/features/crf/export/ecz2026Docx'
+import { studyTitle, studyBatch, getStudyMeta, DEPARTMENT } from '@/features/crf/studyMeta'
 
 const BORDER = { style: BorderStyle.SINGLE, size: 1, color: 'BBBBBB' }
 const CELL_BORDERS = { top: BORDER, bottom: BORDER, left: BORDER, right: BORDER }
@@ -61,13 +62,23 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
+      spacing: { after: 20 },
+      children: [new TextRun({ text: DEPARTMENT.toUpperCase(), bold: true, size: 18, color: '64748B' })],
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 40 },
       children: [new TextRun({ text: 'CASE REPORT FORM', bold: true, size: 30, color: '0F172A' })],
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
+      spacing: { after: 40 },
+      children: [new TextRun({ text: studyTitle(data.studyCode), bold: true, size: 20, color: '334155' })],
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
-      children: [new TextRun({ text: `${data.studyCode}${doc ? ` · Template v${doc.version}` : ''}`, size: 20, color: '475569' })],
+      children: [new TextRun({ text: `${data.studyCode} · ${getStudyMeta(data.studyCode).scholar}${getStudyMeta(data.studyCode).scholar ? ' · ' : ''}Batch ${studyBatch(data.studyCode)}${doc ? ` · Template v${doc.version}` : ''}`, size: 18, color: '475569' })],
     }),
   )
 

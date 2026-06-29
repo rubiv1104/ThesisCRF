@@ -13,10 +13,12 @@ interface Patient {
   gender: string
   study_code: string
   study_title: string
+  batch: string
   group_name: string | null
   investigator_name: string | null
   investigator_email: string | null
   crf_status: string
+  fill_percent: number
 }
 
 function crfStatusStyle(s: string) {
@@ -32,12 +34,26 @@ function crfStatusLabel(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+function CompletionBar({ percent }: { percent: number }) {
+  const color = percent >= 90 ? 'bg-green-500' : percent >= 50 ? 'bg-blue-500' : percent >= 20 ? 'bg-amber-500' : 'bg-slate-300'
+  const text = percent >= 90 ? 'text-green-700' : percent >= 50 ? 'text-blue-700' : percent >= 20 ? 'text-amber-700' : 'text-slate-500'
+  return (
+    <div className="flex items-center gap-2 min-w-[90px]">
+      <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${percent}%` }} />
+      </div>
+      <span className={`text-xs font-medium tabular-nums ${text}`}>{percent}%</span>
+    </div>
+  )
+}
+
 function PatientRow({ p }: { p: Patient }) {
   return (
     <tr className="hover:bg-slate-50 transition-colors">
       <td className="px-4 py-2.5 font-mono text-xs text-slate-500">{p.study_patient_id}</td>
       <td className="px-4 py-2.5 font-medium text-slate-900">{p.patient_name}</td>
       <td className="px-4 py-2.5 text-slate-500 text-xs">{p.age}y / {p.gender}</td>
+      <td className="px-4 py-2.5"><CompletionBar percent={p.fill_percent} /></td>
       <td className="px-4 py-2.5">
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${crfStatusStyle(p.crf_status)}`}>
           {crfStatusLabel(p.crf_status)}
@@ -60,6 +76,100 @@ function PatientRow({ p }: { p: Patient }) {
 
 type StudyEntry = { code: string; title: string; investigator: string | null; patients: Patient[] }
 type GroupEntry = { name: string; patients: Patient[] }
+type BatchEntry = { batch: string; patients: Patient[] }
+
+function StudyCard({ code, studyTitle, investigator, studyPatients, isCollapsed, onToggle }: {
+  code: string
+  studyTitle: string
+  investigator: string | null
+  studyPatients: Patient[]
+  isCollapsed: boolean
+  onToggle: () => void
+}) {
+  // Group within study by group_name
+  const groupMap = new Map<string, GroupEntry>()
+  for (const p of studyPatients) {
+    const g = p.group_name ?? 'Unassigned'
+    let grp = groupMap.get(g)
+    if (!grp) { grp = { name: g, patients: [] }; groupMap.set(g, grp) }
+    grp.patients.push(p)
+  }
+  const groups: GroupEntry[] = Array.from(groupMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+  const avg = studyPatients.length
+    ? Math.round(studyPatients.reduce((s, p) => s + p.fill_percent, 0) / studyPatients.length)
+    : 0
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      {/* Study (participant) header */}
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-mono text-sm font-bold text-blue-700">{code}</span>
+          {investigator && (
+            <span className="flex items-center gap-1 text-xs text-slate-500 shrink-0">
+              <Users size={12} />
+              {investigator}
+            </span>
+          )}
+          {studyTitle && (
+            <span className="hidden md:block text-xs text-slate-400 truncate">{studyTitle}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-xs text-slate-400">avg {avg}% filled</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+            {studyPatients.length} patient{studyPatients.length !== 1 ? 's' : ''}
+          </span>
+          {isCollapsed
+            ? <ChevronRight size={16} className="text-slate-400" />
+            : <ChevronDown size={16} className="text-slate-400" />
+          }
+        </div>
+      </button>
+
+      {!isCollapsed && (
+        <div className="border-t border-slate-100">
+          {groups.map(({ name: groupName, patients: groupPatients }) => {
+            const isGroupA = groupName === 'Group A'
+            const isGroupB = groupName === 'Group B'
+            return (
+              <div key={groupName}>
+                <div className={`flex items-center gap-2 px-5 py-2 border-b border-slate-100 ${
+                  isGroupA ? 'bg-purple-50' : isGroupB ? 'bg-blue-50' : 'bg-slate-50'
+                }`}>
+                  <span className={`text-xs font-semibold ${
+                    isGroupA ? 'text-purple-700' : isGroupB ? 'text-blue-700' : 'text-slate-600'
+                  }`}>{groupName}</span>
+                  <span className={`text-xs ${
+                    isGroupA ? 'text-purple-500' : isGroupB ? 'text-blue-500' : 'text-slate-400'
+                  }`}>· {groupPatients.length} patient{groupPatients.length !== 1 ? 's' : ''}</span>
+                </div>
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium">ID</th>
+                      <th className="px-4 py-2 text-left font-medium">Patient Name</th>
+                      <th className="px-4 py-2 text-left font-medium">Age / Sex</th>
+                      <th className="px-4 py-2 text-left font-medium">CRF Filled</th>
+                      <th className="px-4 py-2 text-left font-medium">CRF Status</th>
+                      <th className="px-4 py-2 text-left font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {groupPatients.map((p) => <PatientRow key={p.id} p={p} />)}
+                  </tbody>
+                </table>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function GroupedView({ patients }: { patients: Patient[] }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
@@ -67,109 +177,58 @@ function GroupedView({ patients }: { patients: Patient[] }) {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  // Build study → group structure using Maps to avoid index-access TS issues
-  const studyMap = new Map<string, StudyEntry>()
+  // Batch → studies (participants) → groups
+  const batchMap = new Map<string, BatchEntry>()
   for (const p of patients) {
-    let entry = studyMap.get(p.study_code)
-    if (!entry) {
-      entry = { code: p.study_code, title: p.study_title, investigator: p.investigator_name, patients: [] }
-      studyMap.set(p.study_code, entry)
-    }
-    entry.patients.push(p)
+    let b = batchMap.get(p.batch)
+    if (!b) { b = { batch: p.batch, patients: [] }; batchMap.set(p.batch, b) }
+    b.patients.push(p)
   }
-  const studies: StudyEntry[] = Array.from(studyMap.values()).sort((a, b) => a.code.localeCompare(b.code))
+  // 'Other' sorts last, otherwise lexical (2023-2026 before 2024-2027)
+  const batches = Array.from(batchMap.values()).sort((a, b) => {
+    if (a.batch === 'Other') return 1
+    if (b.batch === 'Other') return -1
+    return a.batch.localeCompare(b.batch)
+  })
 
   return (
-    <div className="space-y-4">
-      {studies.map(({ code, title: studyTitle, investigator, patients: studyPatients }) => {
-        // Group within study by group_name
-        const groupMap = new Map<string, GroupEntry>()
-        for (const p of studyPatients) {
-          const g = p.group_name ?? 'Unassigned'
-          let grp = groupMap.get(g)
-          if (!grp) { grp = { name: g, patients: [] }; groupMap.set(g, grp) }
-          grp.patients.push(p)
+    <div className="space-y-8">
+      {batches.map(({ batch, patients: batchPatients }) => {
+        const studyMap = new Map<string, StudyEntry>()
+        for (const p of batchPatients) {
+          let entry = studyMap.get(p.study_code)
+          if (!entry) {
+            entry = { code: p.study_code, title: p.study_title, investigator: p.investigator_name, patients: [] }
+            studyMap.set(p.study_code, entry)
+          }
+          entry.patients.push(p)
         }
-        const groups: GroupEntry[] = Array.from(groupMap.values()).sort((a, b) => a.name.localeCompare(b.name))
-
-        const isCollapsed = collapsed[code] ?? false
+        const studies = Array.from(studyMap.values()).sort((a, b) => a.code.localeCompare(b.code))
 
         return (
-          <div key={code} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            {/* Study header */}
-            <button
-              onClick={() => toggle(code)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-slate-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-sm font-bold text-blue-700">{code}</span>
-                {investigator && (
-                  <span className="flex items-center gap-1 text-xs text-slate-500">
-                    <Users size={12} />
-                    {investigator}
-                  </span>
-                )}
-                {studyTitle && (
-                  <span className="hidden sm:block text-xs text-slate-400 max-w-xs truncate">
-                    {studyTitle}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                  {studyPatients.length} patient{studyPatients.length !== 1 ? 's' : ''}
-                </span>
-                {isCollapsed
-                  ? <ChevronRight size={16} className="text-slate-400" />
-                  : <ChevronDown size={16} className="text-slate-400" />
-                }
-              </div>
-            </button>
+          <div key={batch} className="space-y-3">
+            {/* Batch header */}
+            <div className="flex items-center gap-3">
+              <span className="rounded-lg bg-slate-800 px-3 py-1 text-sm font-bold text-white">Batch {batch}</span>
+              <span className="text-xs text-slate-400">
+                {studies.length} scholar{studies.length !== 1 ? 's' : ''} · {batchPatients.length} patient{batchPatients.length !== 1 ? 's' : ''}
+              </span>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
 
-            {!isCollapsed && (
-              <div className="border-t border-slate-100">
-                {groups.map(({ name: groupName, patients: groupPatients }) => {
-                  const isGroupA = groupName === 'Group A'
-                  const isGroupB = groupName === 'Group B'
-
-                  return (
-                    <div key={groupName}>
-                      {/* Group subheader */}
-                      <div className={`flex items-center gap-2 px-5 py-2 border-b border-slate-100 ${
-                        isGroupA ? 'bg-purple-50' : isGroupB ? 'bg-blue-50' : 'bg-slate-50'
-                      }`}>
-                        <span className={`text-xs font-semibold ${
-                          isGroupA ? 'text-purple-700' : isGroupB ? 'text-blue-700' : 'text-slate-600'
-                        }`}>
-                          {groupName}
-                        </span>
-                        <span className={`text-xs ${
-                          isGroupA ? 'text-purple-500' : isGroupB ? 'text-blue-500' : 'text-slate-400'
-                        }`}>
-                          · {groupPatients.length} patient{groupPatients.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-
-                      {/* Patients table */}
-                      <table className="w-full text-sm">
-                        <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
-                          <tr>
-                            <th className="px-4 py-2 text-left font-medium">ID</th>
-                            <th className="px-4 py-2 text-left font-medium">Patient Name</th>
-                            <th className="px-4 py-2 text-left font-medium">Age / Sex</th>
-                            <th className="px-4 py-2 text-left font-medium">CRF Status</th>
-                            <th className="px-4 py-2 text-left font-medium">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {groupPatients.map((p) => <PatientRow key={p.id} p={p} />)}
-                        </tbody>
-                      </table>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            <div className="space-y-3">
+              {studies.map((s) => (
+                <StudyCard
+                  key={s.code}
+                  code={s.code}
+                  studyTitle={s.title}
+                  investigator={s.investigator}
+                  studyPatients={s.patients}
+                  isCollapsed={collapsed[s.code] ?? false}
+                  onToggle={() => toggle(s.code)}
+                />
+              ))}
+            </div>
           </div>
         )
       })}
@@ -193,6 +252,7 @@ function FlatView({ patients }: { patients: Patient[] }) {
             <th className="px-4 py-2.5 text-left font-medium">Group</th>
             <th className="px-4 py-2.5 text-left font-medium">Investigator</th>
             <th className="px-4 py-2.5 text-left font-medium">Age/Sex</th>
+            <th className="px-4 py-2.5 text-left font-medium">CRF Filled</th>
             <th className="px-4 py-2.5 text-left font-medium">CRF Status</th>
             <th className="px-4 py-2.5 text-left font-medium">Actions</th>
           </tr>
@@ -216,6 +276,7 @@ function FlatView({ patients }: { patients: Patient[] }) {
               </td>
               <td className="px-4 py-2.5 text-xs text-slate-700">{p.investigator_name ?? '—'}</td>
               <td className="px-4 py-2.5 text-xs text-slate-500">{p.age}y / {p.gender}</td>
+              <td className="px-4 py-2.5"><CompletionBar percent={p.fill_percent} /></td>
               <td className="px-4 py-2.5">
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${crfStatusStyle(p.crf_status)}`}>
                   {crfStatusLabel(p.crf_status)}

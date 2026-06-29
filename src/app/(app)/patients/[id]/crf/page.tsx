@@ -6,6 +6,7 @@ import { CrfStatusBanner } from '@/features/crf/components/CrfStatusBanner'
 import { InvestigationUpload } from '@/features/investigations/components/InvestigationUpload'
 import { APP_NAME } from '@/constants'
 import { Printer, FileDown } from 'lucide-react'
+import { studyTitle, studyBatch, getStudyMeta } from '@/features/crf/studyMeta'
 
 export const metadata = { title: `CRF | ${APP_NAME}` }
 
@@ -76,6 +77,10 @@ export default async function CrfPage({ params }: PageProps) {
           </div>
           <h1 className="mt-1 text-xl font-semibold text-slate-900">{patient.patient_name}</h1>
           <p className="text-xs text-slate-400">{studyCode} — Case Report Form</p>
+          <p className="mt-1 max-w-2xl text-sm font-medium text-slate-700">{studyTitle(studyCode)}</p>
+          <p className="text-xs text-slate-400">
+            {getStudyMeta(studyCode).scholar}{getStudyMeta(studyCode).scholar ? ' · ' : ''}Batch {studyBatch(studyCode)}
+          </p>
         </div>
 
         {/* Export actions */}

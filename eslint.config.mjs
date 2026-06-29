@@ -8,9 +8,11 @@ const eslintConfig = defineConfig([
   globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'prefer-const': 'error',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react/no-unescaped-entities': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },

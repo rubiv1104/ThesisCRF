@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
 import { assembleCrf } from '@/features/crf/export/assembleCrf'
 import { loadCrfData } from '@/features/crf/export/loadCrfData'
+import { studyTitle, studyBatch, getStudyMeta, DEPARTMENT } from '@/features/crf/studyMeta'
 import { PrintToolbar } from './PrintToolbar'
 
 export const metadata = { title: `Print CRF | ${APP_NAME}` }
@@ -48,9 +49,11 @@ export default async function PrintCrfPage({ params }: PageProps) {
       <div className="crf-sheet mx-auto my-6 max-w-[800px] bg-white p-10 shadow-md print:my-0">
         {/* Header */}
         <div className="mb-6 border-b-2 border-slate-800 pb-4 text-center">
-          <h1 className="text-lg font-bold uppercase tracking-wide text-slate-900">Case Report Form</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {data.studyCode}{doc ? ` · Template v${doc.version}` : ''}
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{DEPARTMENT}</p>
+          <h1 className="mt-1 text-lg font-bold uppercase tracking-wide text-slate-900">Case Report Form</h1>
+          <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold text-slate-800">{studyTitle(data.studyCode)}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {data.studyCode} · {getStudyMeta(data.studyCode).scholar}{getStudyMeta(data.studyCode).scholar ? ' · ' : ''}Batch {studyBatch(data.studyCode)}{doc ? ` · Template v${doc.version}` : ''}
           </p>
         </div>
 

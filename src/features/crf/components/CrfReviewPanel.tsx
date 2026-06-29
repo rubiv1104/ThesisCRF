@@ -26,7 +26,7 @@ interface Props {
 }
 
 export function CrfReviewPanel({
-  patientId, crfId, teacherId, teacherName,
+  patientId: _patientId, crfId, teacherId, teacherName,
   currentValidationStatus, currentValidationNote, validatedAt,
 }: Props) {
   const supabase = createClient() as any

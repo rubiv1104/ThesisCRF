@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { CRF_REGISTRY } from '../registry'
+import { expectedSlots } from '../studyMeta'
 import { CrfSectionAccordion } from './CrfSectionAccordion'
 import { SaveIndicator } from './SaveIndicator'
 import type { SaveStatus } from '../hooks/useCrfResponses'
@@ -86,7 +87,6 @@ interface SectionMeta {
 }
 
 export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}, previewMode = false }: CrfViewProps) {
-  const [crfId, setCrfId] = useState<string | null>(null)
   const [sections, setSections] = useState<SectionMeta[]>([])
   const [values, setValues] = useState<Record<string, string>>({})
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
@@ -137,9 +137,6 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         }
         crf = newCrf
       }
-
-      if (cancelled) return
-      setCrfId(crf.id)
 
       // Get or create sections
       const { data: existingSections } = await supabase
@@ -281,7 +278,7 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
     } else {
       setSaveStatus('saved')
     }
-  }, [supabase]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [supabase])
 
   // Flush any remaining changes when component unmounts
   useEffect(() => () => { flushPending() }, [flushPending])
@@ -351,6 +348,12 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
 
   const completedSections = new Set(sections.filter((s) => s.completed).map((s) => s.section_key))
 
+  // Completion %: non-empty saved values vs total fillable slots in this template
+  const filledCount = Object.values(values).filter((val) => val != null && String(val).trim() !== '').length
+  const expectedCount = expectedSlots(studyCode)
+  const completionPct = expectedCount > 0 ? Math.min(100, Math.round((filledCount / expectedCount) * 100)) : 0
+  const pctColor = completionPct >= 90 ? 'bg-green-500' : completionPct >= 50 ? 'bg-blue-500' : completionPct >= 20 ? 'bg-amber-500' : 'bg-slate-300'
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -359,6 +362,12 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
           <p className="text-xs text-slate-500">
             {template.study_code} v{template.version} · {readOnly ? 'Read-only' : 'Select a visit below, then expand sections'}
           </p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="h-1.5 w-32 rounded-full bg-slate-100 overflow-hidden">
+              <div className={`h-full rounded-full ${pctColor}`} style={{ width: `${completionPct}%` }} />
+            </div>
+            <span className="text-xs font-medium text-slate-500">{completionPct}% filled</span>
+          </div>
         </div>
         {!readOnly && (
           <div className="flex items-center gap-2">

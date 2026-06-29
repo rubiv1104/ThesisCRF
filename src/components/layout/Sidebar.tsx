@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   LayoutDashboard,
   Users,
@@ -80,12 +80,11 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose, role = 'investigator' }: SidebarProps) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-
-  useEffect(() => {
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false
     const saved = localStorage.getItem('sidebar-collapsed')
-    if (saved !== null) setCollapsed(saved === 'true')
-  }, [])
+    return saved === 'true'
+  })
 
   function toggleCollapse() {
     setCollapsed((v) => {
