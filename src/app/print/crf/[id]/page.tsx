@@ -53,7 +53,7 @@ export default async function PrintCrfPage({ params }: PageProps) {
           <h1 className="mt-1 text-lg font-bold uppercase tracking-wide text-slate-900">Case Report Form</h1>
           <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold text-slate-800">{studyTitle(data.studyCode)}</p>
           <p className="mt-1 text-xs text-slate-500">
-            {data.studyCode} · {getStudyMeta(data.studyCode).scholar}{getStudyMeta(data.studyCode).scholar ? ' · ' : ''}Batch {studyBatch(data.studyCode)}{doc ? ` · Template v${doc.version}` : ''}
+            {data.studyCode} · {getStudyMeta(data.studyCode).scholar}{getStudyMeta(data.studyCode).scholar ? ' · ' : ''}Batch {studyBatch(data.studyCode)}
           </p>
         </div>
 

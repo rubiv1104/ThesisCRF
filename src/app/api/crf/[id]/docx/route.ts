@@ -78,7 +78,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 200 },
-      children: [new TextRun({ text: `${data.studyCode} · ${getStudyMeta(data.studyCode).scholar}${getStudyMeta(data.studyCode).scholar ? ' · ' : ''}Batch ${studyBatch(data.studyCode)}${doc ? ` · Template v${doc.version}` : ''}`, size: 18, color: '475569' })],
+      children: [new TextRun({ text: `${data.studyCode} · ${getStudyMeta(data.studyCode).scholar}${getStudyMeta(data.studyCode).scholar ? ' · ' : ''}Batch ${studyBatch(data.studyCode)}`, size: 18, color: '475569' })],
     }),
   )
 

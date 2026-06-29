@@ -360,7 +360,7 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Case Report Form</h2>
           <p className="text-xs text-slate-500">
-            {template.study_code} v{template.version} · {readOnly ? 'Read-only' : 'Select a visit below, then expand sections'}
+            {template.study_code} · {readOnly ? 'Read-only' : 'Select a visit below, then expand sections'}
           </p>
           <div className="mt-1.5 flex items-center gap-2">
             <div className="h-1.5 w-32 rounded-full bg-slate-100 overflow-hidden">
