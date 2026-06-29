@@ -22,6 +22,39 @@ function toKey(name: string) {
   return name.replace(/\s+/g, '_').toLowerCase()
 }
 
+// Arrow-key / Enter navigation between assessment-grid cells.
+// Up/Down (and Enter) move vertically; Left/Right move horizontally only when
+// the caret is at the edge of the cell so in-cell editing still works.
+function handleGridKey(e: React.KeyboardEvent<HTMLInputElement>, gridKey: string) {
+  const el = e.currentTarget
+  const r = Number(el.dataset.row)
+  const c = Number(el.dataset.col)
+  if (Number.isNaN(r) || Number.isNaN(c)) return
+
+  let tr = r
+  let tc = c
+  switch (e.key) {
+    case 'ArrowUp': tr = r - 1; break
+    case 'ArrowDown':
+    case 'Enter': tr = r + 1; break
+    case 'ArrowLeft':
+      if (el.selectionStart !== 0 || el.selectionEnd !== 0) return
+      tc = c - 1; break
+    case 'ArrowRight':
+      if (el.selectionStart !== el.value.length || el.selectionEnd !== el.value.length) return
+      tc = c + 1; break
+    default: return
+  }
+
+  const sel = `input[data-grid="${(window.CSS && CSS.escape) ? CSS.escape(gridKey) : gridKey}"][data-row="${tr}"][data-col="${tc}"]`
+  const next = document.querySelector<HTMLInputElement>(sel)
+  if (next) {
+    e.preventDefault()
+    next.focus()
+    next.select()
+  }
+}
+
 function computeCalcDate(field: CrfField, allValues: Record<string, string>): string | null {
   if (field.formulaId === 'date_plus_days') {
     const raw = allValues['date_induction'] ?? ''
@@ -270,12 +303,12 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
             </tr>
           </thead>
           <tbody>
-            {field.rows?.map((row) => {
+            {field.rows?.map((row, ri) => {
               const rowKey = `${field.key}__${row.replace(/\s+/g, '_').toLowerCase()}`
               return (
                 <tr key={row} className="odd:bg-white even:bg-slate-50">
                   <td className="border border-slate-200 px-2 py-1.5 text-slate-700">{row}</td>
-                  {field.columns?.map((col) => {
+                  {field.columns?.map((col, ci) => {
                     const cellKey = `${rowKey}__${col.replace(/\s+/g, '_').toLowerCase()}`
                     return (
                       <td key={col} className="border border-slate-200 px-1 py-1">
@@ -283,6 +316,10 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
                           className="h-7 border-0 bg-transparent p-0 text-center text-xs focus-visible:ring-0"
                           value={allValues[cellKey] ?? ''}
                           onChange={(e) => onChange(cellKey, e.target.value)}
+                          data-grid={field.key}
+                          data-row={ri}
+                          data-col={ci}
+                          onKeyDown={(e) => handleGridKey(e, field.key)}
                         />
                       </td>
                     )
