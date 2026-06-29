@@ -533,6 +533,15 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
       key: 'disease_assessment',
       title: '11. Disease Assessment',
       fields: [
+        { key: 'aha_scale_heading', label: 'AHA Symptom Scoring Criteria (American Heart Association) — score every visit', type: 'heading' },
+        { key: 'aha_headache', label: 'Headache: 0 = Absent · 1 = Off & On · 2 = Mild–Moderate (no medication required) · 3 = Severe (medication required)', type: 'heading' },
+        { key: 'aha_palpitation', label: 'Palpitation: 0 = Absent · 1 = Present', type: 'heading' },
+        { key: 'aha_dizziness', label: 'Dizziness: 0 = Absent · 1 = Off & On · 2 = On standing only · 3 = Constantly present', type: 'heading' },
+        { key: 'aha_breathlessness', label: 'Breathlessness: 0 = Absent · 1 = On severe exertion · 2 = On slight exertion · 3 = At rest', type: 'heading' },
+        { key: 'aha_fatigue', label: 'Fatigue: 0 = Absent · 1 = Present', type: 'heading' },
+        { key: 'aha_chest_pain', label: 'Chest Pain: 0 = Absent · 1 = Slight pain on severe exertion (subsides on rest) · 2 = On exertion (lasting few minutes) · 3 = Severe, subsides on anti-HTN treatment', type: 'heading' },
+        { key: 'aha_nausea', label: 'Nausea / Vomiting: 0 = Absent · 1 = Only nausea · 2 = Vomiting once or twice · 3 = Vomiting more than twice', type: 'heading' },
+        { key: 'aha_skin', label: 'Pale / Red Skin: 0 = Absent · 1 = Present', type: 'heading' },
         {
           key: 'symptom_grid',
           label: 'Symptom Grading across visits',
