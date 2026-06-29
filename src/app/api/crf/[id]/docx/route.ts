@@ -77,10 +77,21 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 200 },
+      spacing: { after: (getStudyMeta(data.studyCode).iec || getStudyMeta(data.studyCode).ctri) ? 40 : 200 },
       children: [new TextRun({ text: `${data.studyCode} · ${getStudyMeta(data.studyCode).scholar}${getStudyMeta(data.studyCode).scholar ? ' · ' : ''}Batch ${studyBatch(data.studyCode)}`, size: 18, color: '475569' })],
     }),
   )
+  if (getStudyMeta(data.studyCode).iec || getStudyMeta(data.studyCode).ctri) {
+    const m = getStudyMeta(data.studyCode)
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 },
+      children: [new TextRun({
+        text: [m.iec && `IEC No.: ${m.iec}`, m.ctri && `CTRI No.: ${m.ctri}`].filter(Boolean).join('   ·   '),
+        size: 16, color: '64748B',
+      })],
+    }))
+  }
 
   // Patient identity table
   const idWidth = 2340
@@ -183,7 +194,30 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     children.push(new Paragraph({ children: [new TextRun({ text: `No template registered for ${data.studyCode}.`, size: 18 })] }))
   }
 
+  // Signatories
+  const m = getStudyMeta(data.studyCode)
+  children.push(signatoriesTable(m.scholar, m.supervisor, m.coSupervisor))
+
   return packDocx(children, data.studyCode, data.patient.study_patient_id)
+}
+
+/** Bottom signatory block: Research Scholar / Supervisor / Co-Supervisor. */
+function signatoriesTable(scholar: string, supervisor: string, coSupervisor: string) {
+  const W = 3120
+  const sig = (name: string, role: string) => new TableCell({
+    width: { size: W, type: WidthType.DXA },
+    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
+    margins: { top: 400, bottom: 0, left: 80, right: 80 },
+    children: [
+      new Paragraph({ spacing: { after: 0 }, border: { top: { style: BorderStyle.SINGLE, size: 4, color: '64748B', space: 1 } }, children: [new TextRun({ text: name || ' ', bold: true, size: 18 })] }),
+      new Paragraph({ children: [new TextRun({ text: role, size: 16, color: '64748B' })] }),
+    ],
+  })
+  return new Table({
+    width: { size: 9360, type: WidthType.DXA },
+    columnWidths: [W, W, W],
+    rows: [new TableRow({ children: [sig(scholar, 'Research Scholar'), sig(supervisor, 'Supervisor'), sig(coSupervisor, 'Co-Supervisor')] })],
+  })
 }
 
 async function packDocx(children: (Paragraph | Table)[], studyCode: string, patientId: string) {

@@ -144,8 +144,8 @@ export function buildEcz2026Body(v: Vals, patient: Ecz2026Patient): (Paragraph |
     run(`${getStudyMeta('ECZ2026').scholar} · Batch ${getStudyMeta('ECZ2026').batch}`, { size: 16, color: '64748B' }),
   ] }))
 
-  out.push(line('IEC no.', v['iec_number'] ?? ''))
-  out.push(line('CTRI no.', v['ctri_number'] ?? ''))
+  out.push(line('IEC no.', getStudyMeta('ECZ2026').iec || (v['iec_number'] ?? '')))
+  out.push(line('CTRI no.', getStudyMeta('ECZ2026').ctri || (v['ctri_number'] ?? '')))
 
   // ── Identification ──
   out.push(heading('Patient Identification'))
@@ -320,6 +320,27 @@ export function buildEcz2026Body(v: Vals, patient: Ecz2026Patient): (Paragraph |
     { value: 'marked', label: 'Marked' }, { value: 'moderate', label: 'Moderate' },
     { value: 'mild', label: 'Mild' }, { value: 'unchanged', label: 'Unchanged' },
   ], v['overall_effect'] ?? ''))
+
+  // ── Signatories ──
+  const meta = getStudyMeta('ECZ2026')
+  const sigCell = (name: string, role: string) => new TableCell({
+    width: { size: 3120, type: WidthType.DXA },
+    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
+    margins: { top: 400, bottom: 0, left: 80, right: 80 },
+    children: [
+      new Paragraph({ border: { top: { style: BorderStyle.SINGLE, size: 4, color: '64748B', space: 1 } }, children: [run(name || ' ', { bold: true, size: 18 })] }),
+      new Paragraph({ children: [run(role, { size: 16, color: '64748B' })] }),
+    ],
+  })
+  out.push(new Table({
+    width: { size: 9360, type: WidthType.DXA },
+    columnWidths: [3120, 3120, 3120],
+    rows: [new TableRow({ children: [
+      sigCell(meta.scholar, 'Research Scholar'),
+      sigCell(meta.supervisor, 'Supervisor'),
+      sigCell(meta.coSupervisor, 'Co-Supervisor'),
+    ] })],
+  }))
 
   return out
 }

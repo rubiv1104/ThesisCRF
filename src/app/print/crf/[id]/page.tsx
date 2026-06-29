@@ -55,6 +55,13 @@ export default async function PrintCrfPage({ params }: PageProps) {
           <p className="mt-1 text-xs text-slate-500">
             {data.studyCode} · {getStudyMeta(data.studyCode).scholar}{getStudyMeta(data.studyCode).scholar ? ' · ' : ''}Batch {studyBatch(data.studyCode)}
           </p>
+          {(getStudyMeta(data.studyCode).iec || getStudyMeta(data.studyCode).ctri) && (
+            <p className="mt-0.5 text-xs text-slate-500">
+              {getStudyMeta(data.studyCode).iec && <>IEC No.: {getStudyMeta(data.studyCode).iec}</>}
+              {getStudyMeta(data.studyCode).iec && getStudyMeta(data.studyCode).ctri ? '  ·  ' : ''}
+              {getStudyMeta(data.studyCode).ctri && <>CTRI No.: {getStudyMeta(data.studyCode).ctri}</>}
+            </p>
+          )}
         </div>
 
         {/* Patient identity block */}
@@ -158,6 +165,21 @@ export default async function PrintCrfPage({ params }: PageProps) {
           </div>
         )}
 
+        {/* Signatories */}
+        <div className="crf-section mt-12 grid grid-cols-3 gap-8">
+          <div className="text-center">
+            <div className="mt-8 border-t border-slate-400 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(data.studyCode).scholar || ' '}</div>
+            <div className="text-xs text-slate-500">Research Scholar</div>
+          </div>
+          <div className="text-center">
+            <div className="mt-8 border-t border-slate-400 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(data.studyCode).supervisor || ' '}</div>
+            <div className="text-xs text-slate-500">Supervisor</div>
+          </div>
+          <div className="text-center">
+            <div className="mt-8 border-t border-slate-400 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(data.studyCode).coSupervisor || ' '}</div>
+            <div className="text-xs text-slate-500">Co-Supervisor</div>
+          </div>
+        </div>
       </div>
     </div>
   )

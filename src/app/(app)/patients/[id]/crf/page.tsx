@@ -81,6 +81,13 @@ export default async function CrfPage({ params }: PageProps) {
           <p className="text-xs text-slate-400">
             {getStudyMeta(studyCode).scholar}{getStudyMeta(studyCode).scholar ? ' · ' : ''}Batch {studyBatch(studyCode)}
           </p>
+          {(getStudyMeta(studyCode).iec || getStudyMeta(studyCode).ctri) && (
+            <p className="text-xs text-slate-400">
+              {getStudyMeta(studyCode).iec && <>IEC No.: {getStudyMeta(studyCode).iec}</>}
+              {getStudyMeta(studyCode).iec && getStudyMeta(studyCode).ctri ? ' · ' : ''}
+              {getStudyMeta(studyCode).ctri && <>CTRI No.: {getStudyMeta(studyCode).ctri}</>}
+            </p>
+          )}
         </div>
 
         {/* Export actions */}
@@ -139,6 +146,26 @@ export default async function CrfPage({ params }: PageProps) {
           </Link>
         </div>
         <InvestigationUpload patientId={id} patientName={patient.patient_name} readOnly={isReadOnly} />
+      </div>
+
+      {/* Signatories */}
+      <div className="mt-8 border-t border-slate-200 pt-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <div>
+            <p className="border-t border-slate-300 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(studyCode).scholar || '—'}</p>
+            <p className="text-xs text-slate-400">Research Scholar</p>
+          </div>
+          <div>
+            <p className="border-t border-slate-300 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(studyCode).supervisor || '—'}</p>
+            <p className="text-xs text-slate-400">Supervisor</p>
+          </div>
+          {getStudyMeta(studyCode).coSupervisor && (
+            <div>
+              <p className="border-t border-slate-300 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(studyCode).coSupervisor}</p>
+              <p className="text-xs text-slate-400">Co-Supervisor</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
