@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Copy } from 'lucide-react'
 import { cn } from '@/utils'
 import type { CrfField } from '../types'
 
@@ -316,14 +317,37 @@ function CrfFieldRendererInner({ field, value, onChange, allValues, suggestion }
               <th className="border border-slate-200 px-2 py-1.5 text-left font-medium text-slate-600">
                 Parameter
               </th>
-              {field.columns?.map((col) => (
-                <th
-                  key={col}
-                  className="border border-slate-200 px-2 py-1.5 text-center font-medium text-slate-600"
-                >
-                  {col}
-                </th>
-              ))}
+              {field.columns?.map((col, ci) => {
+                const prev = ci > 0 ? field.columns![ci - 1] : null
+                const copyPrev = () => {
+                  if (!prev) return
+                  field.rows?.forEach((row) => {
+                    const rk = `${field.key}__${row.replace(/\s+/g, '_').toLowerCase()}`
+                    const src = allValues[`${rk}__${prev.replace(/\s+/g, '_').toLowerCase()}`] ?? ''
+                    onChange(`${rk}__${col.replace(/\s+/g, '_').toLowerCase()}`, src)
+                  })
+                }
+                return (
+                  <th
+                    key={col}
+                    className="border border-slate-200 px-2 py-1.5 text-center font-medium text-slate-600"
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>{col}</span>
+                      {prev && (
+                        <button
+                          type="button"
+                          onClick={copyPrev}
+                          title={`Copy values from ${prev}`}
+                          className="rounded p-0.5 text-slate-300 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                        >
+                          <Copy size={11} />
+                        </button>
+                      )}
+                    </div>
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>

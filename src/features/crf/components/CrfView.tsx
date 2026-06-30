@@ -463,6 +463,21 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         openAll={readOnly}
         requiredMissing={requiredMissing}
       />
+
+      {/* Floating save — stays reachable on long CRFs (header Save scrolls away) */}
+      {!readOnly && saveStatus !== 'idle' && (
+        <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 shadow-lg">
+          <SaveIndicator status={saveStatus} />
+          {saveStatus === 'unsaved' && (
+            <button
+              onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); flushPending() }}
+              className="rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+            >
+              Save now
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
