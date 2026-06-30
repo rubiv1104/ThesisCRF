@@ -115,35 +115,7 @@ export default async function TeacherDashboardPage() {
         ))}
       </div>
 
-      {/* Supervised studies */}
-      {links.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Studies Under Supervision</h2>
-          <div className="space-y-2">
-            {links.map((l: any, i: number) => (
-              <div key={l.studies?.id ?? i} className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-2.5">
-                <div>
-                  <span className="font-mono text-xs font-bold text-blue-700">{l.studies?.study_code}</span>
-                  <span className="ml-3 text-xs text-slate-600">{studyTitle(l.studies?.study_code ?? '') || l.studies?.study_title}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/teacher/template?study=${l.studies?.study_code ?? ''}`}
-                    className="rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                  >
-                    View CRF Template
-                  </Link>
-                  <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                    {l.role_label ?? 'Guide'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Patient list with CRF review links */}
+      {/* Patient list with CRF review links — the guide's primary work, kept at top */}
       {patients.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-slate-200 py-16 text-center">
           {studyIds.length === 0 ? (
@@ -167,6 +139,34 @@ export default async function TeacherDashboardPage() {
             )}
           </div>
           <GuidePatients patients={guidePatients} />
+        </div>
+      )}
+
+      {/* Supervised studies — reference, moved below the working list */}
+      {links.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Studies Under Supervision</h2>
+          <div className="space-y-2">
+            {links.map((l: any, i: number) => (
+              <div key={l.studies?.id ?? i} className="flex flex-col gap-2 rounded-lg bg-slate-50 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <span className="font-mono text-xs font-bold text-blue-700">{l.studies?.study_code}</span>
+                  <span className="ml-3 text-xs text-slate-600">{studyTitle(l.studies?.study_code ?? '') || l.studies?.study_title}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/teacher/template?study=${l.studies?.study_code ?? ''}`}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    View CRF Template
+                  </Link>
+                  <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                    {l.role_label ?? 'Guide'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
