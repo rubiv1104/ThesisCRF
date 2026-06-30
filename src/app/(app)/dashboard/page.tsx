@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
 import { AddPatientDialog } from '@/features/patients/components/AddPatientDialog'
 import { DeletePatientButton } from '@/app/(app)/admin/patients/DeletePatientButton'
+import { relevantVisitWindow } from '@/features/crf/visitSchedule'
+import { CalendarClock } from 'lucide-react'
 
 export const metadata = { title: `Dashboard | ${APP_NAME}` }
 
@@ -42,18 +44,46 @@ export default async function DashboardPage() {
     if (data) patients.push(...(data as any[]))
   }
 
-  // CRF validation status for each patient
+  // CRF validation status + induction date for each patient
   const patientIds = patients.map((p) => p.id)
   const crfStatuses: Record<string, string> = {}
+  const inductionByPatient: Record<string, string> = {}
   if (patientIds.length > 0) {
     const { data: crfsData } = await supabase
       .from('crfs')
-      .select('patient_id, validation_status')
+      .select('id, patient_id, validation_status')
       .in('patient_id', patientIds)
-    for (const c of (crfsData ?? []) as any[]) {
+    const crfs = (crfsData ?? []) as any[]
+    const crfToPatient: Record<string, string> = {}
+    for (const c of crfs) {
       crfStatuses[c.patient_id] = c.validation_status ?? 'pending'
+      crfToPatient[c.id] = c.patient_id
+    }
+    if (crfs.length > 0) {
+      const { data: secData } = await supabase.from('crf_sections').select('id, crf_id').in('crf_id', crfs.map((c: any) => c.id))
+      const sections = (secData ?? []) as any[]
+      const secToCrf: Record<string, string> = {}
+      for (const s of sections) secToCrf[s.id] = s.crf_id
+      if (sections.length > 0) {
+        const { data: respData } = await supabase
+          .from('crf_responses').select('section_id, response')
+          .eq('field_key', 'date_induction')
+          .in('section_id', sections.map((s: any) => s.id))
+        for (const r of (respData ?? []) as any[]) {
+          const crfId = secToCrf[r.section_id]
+          const pid = crfId ? crfToPatient[crfId] : null
+          if (pid && r.response) inductionByPatient[pid] = r.response
+        }
+      }
     }
   }
+
+  // Project follow-ups due within ±10 days of today (schedule reminder)
+  const studyCode: string = study?.study_code ?? ''
+  const dueVisits = patients
+    .map((p) => ({ p, w: relevantVisitWindow(studyCode, inductionByPatient[p.id]) }))
+    .filter((x): x is { p: any; w: NonNullable<ReturnType<typeof relevantVisitWindow>> } => x.w !== null)
+    .sort((a, b) => a.w.daysUntil - b.w.daysUntil)
 
   return (
     <div className="space-y-6">
@@ -102,6 +132,39 @@ export default async function DashboardPage() {
               {Object.values(crfStatuses).filter((s) => s === 'approved').length}
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Follow-ups due — schedule reminder (±10 days) */}
+      {dueVisits.length > 0 && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <CalendarClock size={16} className="text-blue-600" />
+            <h2 className="text-sm font-semibold text-blue-900">Follow-ups around now</h2>
+            <span className="text-xs text-blue-500">(projected from induction date — confirm in CRF)</span>
+          </div>
+          <ul className="divide-y divide-blue-100">
+            {dueVisits.map(({ p, w }) => {
+              const chip = w.daysUntil === 0
+                ? { text: 'Today', cls: 'bg-green-100 text-green-700' }
+                : w.daysUntil > 0
+                ? { text: `in ${w.daysUntil} day${w.daysUntil > 1 ? 's' : ''}`, cls: 'bg-blue-100 text-blue-700' }
+                : { text: `${-w.daysUntil} day${-w.daysUntil > 1 ? 's' : ''} ago — confirm`, cls: 'bg-red-100 text-red-700' }
+              return (
+                <li key={p.id} className="flex items-center gap-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/patients/${p.id}/crf`} className="text-sm font-medium text-slate-900 hover:text-blue-700">
+                      {p.patient_name}
+                    </Link>
+                    <p className="text-xs text-slate-500">
+                      <span className="font-mono">{p.study_patient_id}</span> · {w.label} · {new Date(w.date + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${chip.cls}`}>{chip.text}</span>
+                </li>
+              )
+            })}
+          </ul>
         </div>
       )}
 
