@@ -22,6 +22,8 @@ interface CrfSectionAccordionProps {
   fieldFilter?: (sectionKey: string, fieldKey: string, fieldType: string) => boolean
   /** Expand all sections by default (used in readOnly/guide review mode) */
   openAll?: boolean
+  /** Count of empty required fields per section key (editor mode) */
+  requiredMissing?: Record<string, number>
 }
 
 export function CrfSectionAccordion({
@@ -33,6 +35,7 @@ export function CrfSectionAccordion({
   visitSectionKeys,
   fieldFilter,
   openAll = false,
+  requiredMissing = {},
 }: CrfSectionAccordionProps) {
   const visibleSections = visitSectionKeys
     ? sections.filter((s) => visitSectionKeys.includes(s.key))
@@ -58,13 +61,18 @@ export function CrfSectionAccordion({
             className="rounded-lg border border-slate-200 bg-white shadow-sm"
           >
             <AccordionTrigger className="px-5 py-4 hover:no-underline">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-1 items-center gap-3">
                 {done ? (
                   <CheckCircle2 size={18} className="shrink-0 text-green-500" />
                 ) : (
                   <Circle size={18} className="shrink-0 text-slate-300" />
                 )}
                 <span className="text-sm font-semibold text-slate-800">{section.title}</span>
+                {(requiredMissing[section.key] ?? 0) > 0 && (
+                  <span className="ml-auto mr-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                    {requiredMissing[section.key]} required left
+                  </span>
+                )}
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-5 pb-5">

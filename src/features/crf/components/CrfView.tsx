@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { CRF_REGISTRY } from '../registry'
 import { expectedSlots } from '../studyMeta'
+import { missingRequiredBySection } from '../validateCrf'
 import { CrfSectionAccordion } from './CrfSectionAccordion'
 import { SaveIndicator } from './SaveIndicator'
 import type { SaveStatus } from '../hooks/useCrfResponses'
@@ -354,6 +355,10 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
   const completionPct = expectedCount > 0 ? Math.min(100, Math.round((filledCount / expectedCount) * 100)) : 0
   const pctColor = completionPct >= 90 ? 'bg-green-500' : completionPct >= 50 ? 'bg-blue-500' : completionPct >= 20 ? 'bg-amber-500' : 'bg-slate-300'
 
+  // Required-field gaps (only meaningful for editors)
+  const requiredMissing = readOnly ? {} : missingRequiredBySection(studyCode, values)
+  const totalRequiredMissing = Object.values(requiredMissing).reduce((a, b) => a + b, 0)
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -362,11 +367,16 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
           <p className="text-xs text-slate-500">
             {template.study_code} · {readOnly ? 'Read-only' : 'Select a visit below, then expand sections'}
           </p>
-          <div className="mt-1.5 flex items-center gap-2">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <div className="h-1.5 w-32 rounded-full bg-slate-100 overflow-hidden">
               <div className={`h-full rounded-full ${pctColor}`} style={{ width: `${completionPct}%` }} />
             </div>
             <span className="text-xs font-medium text-slate-500">{completionPct}% filled</span>
+            {!readOnly && totalRequiredMissing > 0 && (
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                {totalRequiredMissing} required field{totalRequiredMissing > 1 ? 's' : ''} left
+              </span>
+            )}
           </div>
         </div>
         {!readOnly && (
@@ -435,6 +445,7 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         visitSectionKeys={visitSectionKeys}
         fieldFilter={fieldFilter}
         openAll={readOnly}
+        requiredMissing={requiredMissing}
       />
     </div>
   )

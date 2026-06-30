@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { findMissingRequired } from '@/features/crf/validateCrf'
 
 export async function submitCrfForReview(patientId: string): Promise<{ success: true } | { error: string }> {
   const supabase = await createClient() as any
@@ -27,6 +28,29 @@ export async function submitCrfForReview(patientId: string): Promise<{ success: 
 
   if (crf.validation_status === 'approved') {
     return { error: 'This CRF is already approved by your guide.' }
+  }
+
+  // Block submission while required fields are still empty.
+  const { data: patient } = await supabase
+    .from('patients').select('studies(study_code)').eq('id', patientId).single()
+  const studyCode: string = (patient as any)?.studies?.study_code ?? ''
+  if (studyCode) {
+    const { data: sections } = await supabase.from('crf_sections').select('id').eq('crf_id', crf.id)
+    const sectionIds = ((sections ?? []) as any[]).map((s) => s.id)
+    const values: Record<string, string> = {}
+    if (sectionIds.length > 0) {
+      const { data: responses } = await supabase
+        .from('crf_responses').select('field_key, response').in('section_id', sectionIds)
+      for (const r of (responses ?? []) as any[]) {
+        if (r.field_key && r.response != null) values[r.field_key] = r.response
+      }
+    }
+    const missing = findMissingRequired(studyCode, values)
+    if (missing.length > 0) {
+      const preview = missing.slice(0, 5).map((m) => `${m.section} → ${m.label}`).join('; ')
+      const more = missing.length > 5 ? ` …and ${missing.length - 5} more` : ''
+      return { error: `Cannot submit — ${missing.length} required field${missing.length > 1 ? 's' : ''} still empty: ${preview}${more}` }
+    }
   }
 
   const { error } = await supabase

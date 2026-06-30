@@ -22,6 +22,30 @@ function toKey(name: string) {
   return name.replace(/\s+/g, '_').toLowerCase()
 }
 
+// Plausibility ranges for physiological fields whose units are consistent across
+// all study CRFs. Soft warning only — never blocks saving.
+const FIELD_RANGES: Record<string, { min: number; max: number }> = {
+  pulse_rate: { min: 20, max: 250 },
+  respiratory_rate: { min: 5, max: 80 },
+  bp_systolic: { min: 50, max: 300 },
+  bp_diastolic: { min: 30, max: 200 },
+}
+
+function rangeWarning(key: string, raw: string): string | null {
+  const r = FIELD_RANGES[key]
+  if (!r || raw === '' || raw == null) return null
+  const n = parseFloat(raw)
+  if (isNaN(n)) return null
+  if (n < r.min || n > r.max) return `Out of expected range (${r.min}–${r.max})`
+  return null
+}
+
+/** Parse a "0–N" / "0-N" score ceiling from a grid row label, if present. */
+function parseScoreMax(label: string): number | null {
+  const m = label.match(/0\s*[–-]\s*(\d+)/)
+  return m && m[1] ? parseInt(m[1], 10) : null
+}
+
 // Arrow-key / Enter navigation between assessment-grid cells.
 // Up/Down (and Enter) move vertically; Left/Right move horizontally only when
 // the caret is at the edge of the cell so in-cell editing still works.
@@ -305,21 +329,26 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
           <tbody>
             {field.rows?.map((row, ri) => {
               const rowKey = `${field.key}__${row.replace(/\s+/g, '_').toLowerCase()}`
+              const scoreMax = parseScoreMax(row)
               return (
                 <tr key={row} className="odd:bg-white even:bg-slate-50">
                   <td className="border border-slate-200 px-2 py-1.5 text-slate-700">{row}</td>
                   {field.columns?.map((col, ci) => {
                     const cellKey = `${rowKey}__${col.replace(/\s+/g, '_').toLowerCase()}`
+                    const raw = allValues[cellKey] ?? ''
+                    const n = raw === '' ? NaN : parseFloat(raw)
+                    const outOfRange = scoreMax != null && !isNaN(n) && (n < 0 || n > scoreMax)
                     return (
-                      <td key={col} className="border border-slate-200 px-1 py-1">
+                      <td key={col} className={cn('border border-slate-200 px-1 py-1', outOfRange && 'bg-red-50')}>
                         <Input
-                          className="h-7 border-0 bg-transparent p-0 text-center text-xs focus-visible:ring-0"
-                          value={allValues[cellKey] ?? ''}
+                          className={cn('h-7 border-0 bg-transparent p-0 text-center text-xs focus-visible:ring-0', outOfRange && 'text-red-600 font-semibold')}
+                          value={raw}
                           onChange={(e) => onChange(cellKey, e.target.value)}
                           data-grid={field.key}
                           data-row={ri}
                           data-col={ci}
                           onKeyDown={(e) => handleGridKey(e, field.key)}
+                          title={outOfRange ? `Expected 0–${scoreMax}` : undefined}
                         />
                       </td>
                     )
@@ -354,15 +383,20 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
       )}
 
       {field.type === 'number' && (
-        <SuggestInput
-          id={field.key}
-          type="number"
-          value={value}
-          suggestion={suggestion}
-          placeholder={field.placeholder}
-          className="max-w-[180px]"
-          onChange={(v) => onChange(field.key, v)}
-        />
+        <>
+          <SuggestInput
+            id={field.key}
+            type="number"
+            value={value}
+            suggestion={suggestion}
+            placeholder={field.placeholder}
+            className="max-w-[180px]"
+            onChange={(v) => onChange(field.key, v)}
+          />
+          {rangeWarning(field.key, value) && (
+            <p className="text-xs font-medium text-amber-600">{rangeWarning(field.key, value)}</p>
+          )}
+        </>
       )}
 
       {field.type === 'date' && (
