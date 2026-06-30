@@ -227,21 +227,22 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
           }
         }
 
-        // Apply defaultValues for any field not yet saved
+        // Apply defaultValues for any field not yet saved — collected and written
+        // as a SINGLE batch upsert (not one round-trip per field).
         if (template) {
+          const defaults: PendingRow[] = []
           for (const section of template.sections) {
             const meta = sectionMeta.find((s) => s.section_key === section.key)
             if (!meta) continue
             for (const field of section.fields) {
               if (field.defaultValue && !loaded[field.key]) {
                 loaded[field.key] = field.defaultValue
-                // Persist to DB so it's not blank next time
-                await supabase.from('crf_responses').upsert(
-                  { section_id: meta.id, field_key: field.key, field_label: field.label, field_type: field.type, response: field.defaultValue, visit_number: 0 },
-                  { onConflict: 'section_id,field_key,visit_number' }
-                )
+                defaults.push({ section_id: meta.id, field_key: field.key, field_label: field.label, field_type: field.type, response: field.defaultValue, visit_number: 0 })
               }
             }
+          }
+          if (defaults.length > 0) {
+            await supabase.from('crf_responses').upsert(defaults, { onConflict: 'section_id,field_key,visit_number' })
           }
         }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { memo, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -276,7 +276,7 @@ interface CrfFieldRendererProps {
   suggestion?: string
 }
 
-export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion }: CrfFieldRendererProps) {
+function CrfFieldRendererInner({ field, value, onChange, allValues, suggestion }: CrfFieldRendererProps) {
   // Conditional visibility
   if (field.dependsOn) {
     const depValue = allValues[field.dependsOn.key]
@@ -512,3 +512,25 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
     </div>
   )
 }
+
+// Only fields that depend on OTHER fields (calculated formulas, conditional
+// visibility, or grid cells) need to re-render when the whole values object
+// changes. Plain inputs re-render only when their own value/suggestion changes —
+// so typing in one field no longer re-renders the entire form.
+function fieldUsesAllValues(field: CrfField): boolean {
+  return field.type === 'calculated'
+    || field.type === 'assessment_grid'
+    || field.type === 'investigation_table'
+    || !!field.dependsOn
+}
+
+function areEqual(prev: CrfFieldRendererProps, next: CrfFieldRendererProps): boolean {
+  if (prev.field !== next.field) return false
+  if (prev.value !== next.value) return false
+  if (prev.suggestion !== next.suggestion) return false
+  if (prev.onChange !== next.onChange) return false
+  if (fieldUsesAllValues(next.field) && prev.allValues !== next.allValues) return false
+  return true
+}
+
+export const CrfFieldRenderer = memo(CrfFieldRendererInner, areEqual)
