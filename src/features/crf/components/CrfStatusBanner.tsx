@@ -17,6 +17,7 @@ export function CrfStatusBanner({ patientId, validationStatus, validationNote, v
   const status = validationStatus ?? 'pending'
 
   function handleSubmit() {
+    if (!confirm('Submit this CRF to your guide for review?\n\nYou will not be able to edit it until the guide approves or returns it for correction.')) return
     setFeedback('')
     startTransition(async () => {
       const res = await submitCrfForReview(patientId)

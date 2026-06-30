@@ -74,7 +74,18 @@ export function AddPatientDialog({ studyId, studyCode, groups, investigatorId }:
         .single()
 
       if (error) {
-        toast.error(error.message)
+        const msg = String(error.message ?? '')
+        if (error.code === '23505' || /duplicate key/i.test(msg)) {
+          if (/hospital_cr_number/i.test(msg)) {
+            toast.error(`CR Number "${values.hospital_cr_number}" is already enrolled in this study.`)
+          } else if (/opd_number/i.test(msg)) {
+            toast.error(`OPD Number "${values.opd_number}" is already enrolled in this study.`)
+          } else {
+            toast.error('This patient appears to be already enrolled in this study.')
+          }
+        } else {
+          toast.error(msg || 'Could not enrol patient.')
+        }
         return
       }
 
