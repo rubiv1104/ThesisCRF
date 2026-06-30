@@ -3,24 +3,22 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
 import { expectedSlots, studyTitle } from '@/features/crf/studyMeta'
+import { getViewer } from '@/lib/viewer'
 import { GuidePatients, type GuidePatient } from './GuidePatients'
 
 export const metadata = { title: `Guide Dashboard | ${APP_NAME}` }
 
 export default async function TeacherDashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const viewer = await getViewer(supabase)
+  if (!viewer) redirect('/login')
+  if (viewer.effectiveRole !== 'teacher') redirect('/dashboard')
+  const user = { id: viewer.effectiveUserId }
+  const profile = { role: 'teacher', full_name: viewer.effectiveName }
 
-  // Run profile and study assignments in parallel
-  const [{ data: profile }, { data: linksRaw }] = await Promise.all([
-    supabase.from('user_profiles').select('role, full_name').eq('id', user.id).single(),
-    (supabase as any).from('study_teachers')
-      .select('role_label, studies(id, study_code, study_title, sample_size)')
-      .eq('teacher_id', user.id),
-  ])
-
-  if ((profile as any)?.role !== 'teacher') redirect('/dashboard')
+  const { data: linksRaw } = await (supabase as any).from('study_teachers')
+    .select('role_label, studies(id, study_code, study_title, sample_size)')
+    .eq('teacher_id', user.id)
 
   const links = (linksRaw ?? []) as any[]
   const studyIds = links.map((l: any) => l.studies?.id).filter(Boolean)

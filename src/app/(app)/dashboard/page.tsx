@@ -5,6 +5,7 @@ import { APP_NAME } from '@/constants'
 import { AddPatientDialog } from '@/features/patients/components/AddPatientDialog'
 import { DeletePatientButton } from '@/app/(app)/admin/patients/DeletePatientButton'
 import { relevantVisitWindow } from '@/features/crf/visitSchedule'
+import { getViewer } from '@/lib/viewer'
 import { CalendarClock } from 'lucide-react'
 
 export const metadata = { title: `Dashboard | ${APP_NAME}` }
@@ -12,15 +13,14 @@ export const metadata = { title: `Dashboard | ${APP_NAME}` }
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const viewer = await getViewer(supabase)
+  if (!viewer) redirect('/login')
 
-  // Redirect non-investigators to their own home
-  const { data: profileCheck } = await supabase
-    .from('user_profiles').select('role').eq('id', user.id).single()
-  const checkRole = (profileCheck as any)?.role
-  if (checkRole === 'admin') redirect('/admin')
-  if (checkRole === 'teacher') redirect('/teacher')
+  // Redirect non-investigators to their own home (honours impersonation)
+  if (viewer.effectiveRole === 'admin') redirect('/admin')
+  if (viewer.effectiveRole === 'teacher') redirect('/teacher')
+
+  const user = { id: viewer.effectiveUserId }
 
   // Get investigator's study
   const { data: linkRaw } = await supabase

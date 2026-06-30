@@ -1,24 +1,21 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppShell } from '@/components/layout/AppShell'
+import { getViewer } from '@/lib/viewer'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let role: 'admin' | 'teacher' | 'investigator' = 'investigator'
+  // Deactivated-account guard uses the real user
   if (user) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('role, is_active')
-      .eq('id', user.id)
-      .single()
-    const p = profile as { role: string; is_active: boolean } | null
-    if (p?.is_active === false) redirect('/deactivated')
-    const r = p?.role
-    if (r === 'admin') role = 'admin'
-    else if (r === 'teacher') role = 'teacher'
+    const { data: profile } = await supabase.from('user_profiles').select('is_active').eq('id', user.id).single()
+    if ((profile as { is_active: boolean } | null)?.is_active === false) redirect('/deactivated')
   }
 
-  return <AppShell role={role}>{children}</AppShell>
+  const viewer = await getViewer(supabase)
+  const role = viewer?.effectiveRole ?? 'investigator'
+  const impersonation = viewer?.impersonating ? { name: viewer.effectiveName, role: viewer.effectiveRole } : null
+
+  return <AppShell role={role} impersonation={impersonation}>{children}</AppShell>
 }

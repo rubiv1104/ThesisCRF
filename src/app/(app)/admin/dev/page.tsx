@@ -5,7 +5,8 @@ import { APP_NAME } from '@/constants'
 import { CRF_REGISTRY } from '@/features/crf/registry'
 import { getStudyMeta } from '@/features/crf/studyMeta'
 import { PermissionMatrix } from '@/features/dev/PermissionMatrix'
-import { FlaskConical, FileText, ClipboardList, Printer, Database, Layers, Activity } from 'lucide-react'
+import { ImpersonateButton } from '@/features/dev/ImpersonateButton'
+import { FlaskConical, FileText, ClipboardList, Printer, Database, Layers, Activity, Users } from 'lucide-react'
 
 export const metadata = { title: `Developer Tools | ${APP_NAME}` }
 
@@ -25,7 +26,7 @@ export default async function DevToolsPage() {
   // ── System counts ──
   const [studies, users, patients, crfsRaw, docsRaw, statusAudit, fieldAudit] = await Promise.all([
     supabase.from('studies').select('id', { count: 'exact', head: true }),
-    supabase.from('user_profiles').select('id, role'),
+    supabase.from('user_profiles').select('id, role, full_name, email'),
     supabase.from('patients').select('id', { count: 'exact', head: true }),
     supabase.from('crfs').select('validation_status'),
     supabase.from('investigation_documents').select('file_size'),
@@ -83,6 +84,29 @@ export default async function DevToolsPage() {
         <p className="mt-2 text-xs text-slate-400">
           Users by role: {Object.entries(roleCounts).map(([r, n]) => `${n} ${r}`).join(' · ') || '—'}
         </p>
+      </section>
+
+      {/* Impersonation / View As */}
+      <section>
+        <h2 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500"><Users size={13} /> View As (Impersonation)</h2>
+        <div className="rounded-xl border border-purple-200 bg-purple-50/40 p-4">
+          <p className="mb-3 text-xs text-slate-500">See the app exactly as a guide or investigator sees it — no logout, no password. Every impersonation is logged. Use “Return to Administrator” in the banner to exit.</p>
+          <div className="space-y-1.5">
+            {usersArr.filter((u) => u.role !== 'admin').sort((a, b) => String(a.role).localeCompare(b.role)).map((u) => (
+              <div key={u.id} className="flex items-center gap-3 rounded-lg bg-white px-3 py-2">
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${u.role === 'teacher' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
+                  {u.role === 'teacher' ? 'Guide' : 'Investigator'}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-800">{u.full_name ?? u.email}</p>
+                  <p className="truncate text-[11px] text-slate-400">{u.email}</p>
+                </div>
+                <ImpersonateButton userId={u.id} label="View as" />
+              </div>
+            ))}
+            {usersArr.filter((u) => u.role !== 'admin').length === 0 && <p className="text-xs text-slate-400">No guides or investigators to impersonate yet.</p>}
+          </div>
+        </div>
       </section>
 
       {/* Tools */}
