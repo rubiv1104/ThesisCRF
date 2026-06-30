@@ -324,7 +324,7 @@ export function buildEcz2026Body(v: Vals, patient: Ecz2026Patient): (Paragraph |
   // ── Signatories ──
   const meta = getStudyMeta('ECZ2026')
   const sigCell = (name: string, role: string) => new TableCell({
-    width: { size: 3120, type: WidthType.DXA },
+    width: { size: 4680, type: WidthType.DXA },
     borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
     margins: { top: 400, bottom: 0, left: 80, right: 80 },
     children: [
@@ -334,11 +334,10 @@ export function buildEcz2026Body(v: Vals, patient: Ecz2026Patient): (Paragraph |
   })
   out.push(new Table({
     width: { size: 9360, type: WidthType.DXA },
-    columnWidths: [3120, 3120, 3120],
+    columnWidths: [4680, 4680],
     rows: [new TableRow({ children: [
       sigCell(meta.scholar, 'Research Scholar'),
       sigCell(meta.supervisor, 'Supervisor'),
-      sigCell(meta.coSupervisor, 'Co-Supervisor'),
     ] })],
   }))
 

@@ -56,7 +56,7 @@ export default async function CrfPage({ params }: PageProps) {
   return (
     <div className="space-y-4">
       {/* Patient header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <div className="flex items-center gap-2">
             <Link
@@ -150,7 +150,7 @@ export default async function CrfPage({ params }: PageProps) {
 
       {/* Signatories */}
       <div className="mt-8 border-t border-slate-200 pt-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <p className="border-t border-slate-300 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(studyCode).scholar || '—'}</p>
             <p className="text-xs text-slate-400">Research Scholar</p>
@@ -159,12 +159,6 @@ export default async function CrfPage({ params }: PageProps) {
             <p className="border-t border-slate-300 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(studyCode).supervisor || '—'}</p>
             <p className="text-xs text-slate-400">Supervisor</p>
           </div>
-          {getStudyMeta(studyCode).coSupervisor && (
-            <div>
-              <p className="border-t border-slate-300 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(studyCode).coSupervisor}</p>
-              <p className="text-xs text-slate-400">Co-Supervisor</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

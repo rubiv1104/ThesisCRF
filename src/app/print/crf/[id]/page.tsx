@@ -166,7 +166,7 @@ export default async function PrintCrfPage({ params }: PageProps) {
         )}
 
         {/* Signatories */}
-        <div className="crf-section mt-12 grid grid-cols-3 gap-8">
+        <div className="crf-section mt-12 grid grid-cols-2 gap-8">
           <div className="text-center">
             <div className="mt-8 border-t border-slate-400 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(data.studyCode).scholar || ' '}</div>
             <div className="text-xs text-slate-500">Research Scholar</div>
@@ -174,10 +174,6 @@ export default async function PrintCrfPage({ params }: PageProps) {
           <div className="text-center">
             <div className="mt-8 border-t border-slate-400 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(data.studyCode).supervisor || ' '}</div>
             <div className="text-xs text-slate-500">Supervisor</div>
-          </div>
-          <div className="text-center">
-            <div className="mt-8 border-t border-slate-400 pt-1 text-sm font-medium text-slate-800">{getStudyMeta(data.studyCode).coSupervisor || ' '}</div>
-            <div className="text-xs text-slate-500">Co-Supervisor</div>
           </div>
         </div>
       </div>

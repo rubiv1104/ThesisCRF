@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Upload, FileText, Trash2, Loader2, Download } from 'lucide-react'
+import { Upload, FileText, Trash2, Loader2, Download, Eye, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 
@@ -49,6 +49,8 @@ export function InvestigationUpload({ patientId, patientName: _patientName, read
   const [uploading, setUploading] = useState(false)
   const [visitLabel, setVisitLabel] = useState(VISIT_OPTIONS[0])
   const [description, setDescription] = useState('')
+  const [viewer, setViewer] = useState<{ url: string; name: string; isImage: boolean } | null>(null)
+  const [viewerLoading, setViewerLoading] = useState(false)
 
   const loadDocs = useCallback(async () => {
     setLoading(true)
@@ -118,6 +120,18 @@ export function InvestigationUpload({ patientId, patientName: _patientName, read
     a.href = data.signedUrl
     a.download = doc.file_name
     a.click()
+  }
+
+  async function handleView(doc: Doc) {
+    setViewerLoading(true)
+    const { data, error } = await supabase.storage
+      .from('investigation-docs')
+      .createSignedUrl(doc.file_path, 300)
+    setViewerLoading(false)
+    if (error || !data) { toast.error('Could not open file.'); return }
+    const ext = (doc.file_name.split('.').pop() ?? '').toLowerCase()
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)
+    setViewer({ url: data.signedUrl, name: doc.file_name, isImage })
   }
 
   async function handleDelete(doc: Doc) {
@@ -225,6 +239,14 @@ export function InvestigationUpload({ patientId, patientName: _patientName, read
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => handleView(doc)}
+                  title="View"
+                >
+                  <Eye size={15} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleDownload(doc)}
                   title="Download"
                 >
@@ -246,6 +268,51 @@ export function InvestigationUpload({ patientId, patientName: _patientName, read
           </ul>
         )}
       </div>
+
+      {viewerLoading && (
+        <div className="flex items-center gap-2 text-sm text-blue-600">
+          <Loader2 size={16} className="animate-spin" /> Opening…
+        </div>
+      )}
+
+      {/* Inline viewer — shows the PDF/image as-is */}
+      {viewer && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-black/70 p-2 sm:p-6"
+          onClick={() => setViewer(null)}
+        >
+          <div
+            className="mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-2.5">
+              <FileText size={16} className="shrink-0 text-red-400" />
+              <span className="flex-1 truncate text-sm font-medium text-slate-800">{viewer.name}</span>
+              <a
+                href={viewer.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Open in new tab
+              </a>
+              <button onClick={() => setViewer(null)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto bg-slate-100">
+              {viewer.isImage ? (
+                <div className="flex min-h-full items-center justify-center p-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={viewer.url} alt={viewer.name} className="max-h-full max-w-full object-contain" />
+                </div>
+              ) : (
+                <iframe src={viewer.url} title={viewer.name} className="h-full w-full" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

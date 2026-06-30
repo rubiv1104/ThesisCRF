@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { CrfView } from '@/features/crf/components/CrfView'
 import { CrfReviewPanel } from '@/features/crf/components/CrfReviewPanel'
+import { InvestigationUpload } from '@/features/investigations/components/InvestigationUpload'
 import { APP_NAME } from '@/constants'
 import { ChevronLeft } from 'lucide-react'
 
@@ -90,6 +91,12 @@ export default async function TeacherCrfReviewPage({ params }: PageProps) {
       {/* CRF data — all sections expanded so guide can read everything */}
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-1">
         <CrfView patientId={patientId} studyCode={studyCode} readOnly />
+      </div>
+
+      {/* Investigation reports — guide can view / open the uploaded PDFs */}
+      <div className="border-t border-slate-200 pt-5">
+        <h2 className="mb-3 text-base font-semibold text-slate-800">Investigation Reports</h2>
+        <InvestigationUpload patientId={patientId} patientName={patient.patient_name} readOnly />
       </div>
 
       {/* Review panel — approve / return / add comments — below the CRF */}

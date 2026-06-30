@@ -196,14 +196,14 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   // Signatories
   const m = getStudyMeta(data.studyCode)
-  children.push(signatoriesTable(m.scholar, m.supervisor, m.coSupervisor))
+  children.push(signatoriesTable(m.scholar, m.supervisor))
 
   return packDocx(children, data.studyCode, data.patient.study_patient_id)
 }
 
-/** Bottom signatory block: Research Scholar / Supervisor / Co-Supervisor. */
-function signatoriesTable(scholar: string, supervisor: string, coSupervisor: string) {
-  const W = 3120
+/** Bottom signatory block: Research Scholar / Supervisor. */
+function signatoriesTable(scholar: string, supervisor: string) {
+  const W = 4680
   const sig = (name: string, role: string) => new TableCell({
     width: { size: W, type: WidthType.DXA },
     borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
@@ -215,8 +215,8 @@ function signatoriesTable(scholar: string, supervisor: string, coSupervisor: str
   })
   return new Table({
     width: { size: 9360, type: WidthType.DXA },
-    columnWidths: [W, W, W],
-    rows: [new TableRow({ children: [sig(scholar, 'Research Scholar'), sig(supervisor, 'Supervisor'), sig(coSupervisor, 'Co-Supervisor')] })],
+    columnWidths: [W, W],
+    rows: [new TableRow({ children: [sig(scholar, 'Research Scholar'), sig(supervisor, 'Supervisor')] })],
   })
 }
 

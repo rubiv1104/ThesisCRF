@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
 import { expectedSlots } from '@/features/crf/studyMeta'
+import { GuidePatients, type GuidePatient } from './GuidePatients'
 
 export const metadata = { title: `Guide Dashboard | ${APP_NAME}` }
 
@@ -54,6 +55,18 @@ export default async function TeacherDashboardPage() {
   const validatedCount = crfs.filter((c: any) => c.validation_status === 'approved').length
   const submittedCount = crfs.filter((c: any) => c.validation_status === 'submitted').length
   const returnedCount = crfs.filter((c: any) => c.validation_status === 'returned').length
+
+  const guidePatients: GuidePatient[] = patients.map((p: any) => ({
+    id: p.id,
+    patient_name: p.patient_name,
+    study_patient_id: p.study_patient_id,
+    study_code: (p.studies as any)?.study_code ?? '',
+    group_name: (p.research_groups as any)?.group_name ?? null,
+    investigator_name: (p.user_profiles as any)?.full_name ?? 'Unknown',
+    investigator_email: (p.user_profiles as any)?.email ?? '',
+    crf_status: crfs.find((c: any) => c.patient_id === p.id)?.validation_status ?? 'not_started',
+    fill_percent: fillPercent(p),
+  }))
 
   return (
     <div className="space-y-6">
@@ -146,92 +159,14 @@ export default async function TeacherDashboardPage() {
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">All Patients</h2>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Investigators</h2>
             {returnedCount > 0 && (
               <span className="text-xs text-amber-600 font-medium">{returnedCount} returned for correction</span>
             )}
           </div>
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
-              <tr>
-                <th className="px-5 py-3 text-left font-medium">ID</th>
-                <th className="px-5 py-3 text-left font-medium">Patient</th>
-                <th className="px-5 py-3 text-left font-medium">Study</th>
-                <th className="px-5 py-3 text-left font-medium">Group</th>
-                <th className="px-5 py-3 text-left font-medium">Investigator</th>
-                <th className="px-5 py-3 text-left font-medium">CRF Filled</th>
-                <th className="px-5 py-3 text-left font-medium">CRF Status</th>
-                <th className="px-5 py-3 text-left font-medium">Review</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {[...patients].sort((a, b) => {
-                const order = { submitted: 0, returned: 1, pending: 2, approved: 3 }
-                const sa = crfs.find((c: any) => c.patient_id === a.id)?.validation_status ?? 'pending'
-                const sb = crfs.find((c: any) => c.patient_id === b.id)?.validation_status ?? 'pending'
-                return (order[sa as keyof typeof order] ?? 2) - (order[sb as keyof typeof order] ?? 2)
-              }).map((p: any) => {
-                const crf = crfs.find((c: any) => c.patient_id === p.id)
-                const vstatus = crf?.validation_status ?? 'pending'
-                return (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-3 font-mono text-xs text-slate-500">{p.study_patient_id}</td>
-                    <td className="px-5 py-3 font-medium text-slate-900">{p.patient_name}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-blue-700">{(p.studies as any)?.study_code}</td>
-                    <td className="px-5 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        (p.research_groups as any)?.group_name === 'Group A'
-                          ? 'bg-purple-50 text-purple-700'
-                          : 'bg-blue-50 text-blue-700'
-                      }`}>
-                        {(p.research_groups as any)?.group_name ?? '—'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="text-xs font-medium text-slate-800">{(p.user_profiles as any)?.full_name ?? '—'}</div>
-                      <div className="text-[11px] text-slate-400">{(p.user_profiles as any)?.email ?? ''}</div>
-                    </td>
-                    <td className="px-5 py-3">
-                      {(() => {
-                        const pct = fillPercent(p)
-                        const c = pct >= 90 ? 'bg-green-500' : pct >= 50 ? 'bg-blue-500' : pct >= 20 ? 'bg-amber-500' : 'bg-slate-300'
-                        return (
-                          <div className="flex items-center gap-2 min-w-[90px]">
-                            <div className="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
-                              <div className={`h-full rounded-full ${c}`} style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className="text-xs font-medium tabular-nums text-slate-600">{pct}%</span>
-                          </div>
-                        )
-                      })()}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
-                        vstatus === 'approved' ? 'bg-green-50 text-green-700'
-                        : vstatus === 'submitted' ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-300'
-                        : vstatus === 'returned' ? 'bg-red-50 text-red-600'
-                        : 'bg-slate-100 text-slate-500'
-                      }`}>
-                        {vstatus === 'pending' ? 'In Progress'
-                        : vstatus === 'submitted' ? '⏳ Awaiting Review'
-                        : vstatus}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <Link
-                        href={`/teacher/review/${p.id}`}
-                        className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
-                      >
-                        Review CRF
-                      </Link>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <GuidePatients patients={guidePatients} />
         </div>
       )}
     </div>
