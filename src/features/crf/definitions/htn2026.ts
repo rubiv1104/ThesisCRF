@@ -82,44 +82,44 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
       key: 'history',
       title: '4. Chief Complaints & History',
       fields: [
-        { key: 'cc_heading', label: 'Chief Complaints (with Yes/No, Duration and initial Grade)', type: 'heading' },
+        { key: 'cc_heading', label: 'Chief Complaints (presence & duration) — symptom severity is scored in the Assessment Scales panel', type: 'heading' },
         {
-          key: 'cc_headache', label: 'Headache (grade 0–3)', type: 'radio',
+          key: 'cc_headache', label: 'Headache', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
         },
         { key: 'cc_headache_duration', label: 'Headache – Duration', type: 'text', dependsOn: { key: 'cc_headache', value: 'present' } },
         {
-          key: 'cc_palpitation', label: 'Palpitation (grade 0–1)', type: 'radio',
+          key: 'cc_palpitation', label: 'Palpitation', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
         },
         { key: 'cc_palpitation_duration', label: 'Palpitation – Duration', type: 'text', dependsOn: { key: 'cc_palpitation', value: 'present' } },
         {
-          key: 'cc_dizziness', label: 'Dizziness (grade 0–3)', type: 'radio',
+          key: 'cc_dizziness', label: 'Dizziness', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
         },
         { key: 'cc_dizziness_duration', label: 'Dizziness – Duration', type: 'text', dependsOn: { key: 'cc_dizziness', value: 'present' } },
         {
-          key: 'cc_breathlessness', label: 'Breathlessness (grade 0–3)', type: 'radio',
+          key: 'cc_breathlessness', label: 'Breathlessness', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
         },
         { key: 'cc_breathlessness_duration', label: 'Breathlessness – Duration', type: 'text', dependsOn: { key: 'cc_breathlessness', value: 'present' } },
         {
-          key: 'cc_fatigue', label: 'Fatigue (grade 0–1)', type: 'radio',
+          key: 'cc_fatigue', label: 'Fatigue', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
         },
         { key: 'cc_fatigue_duration', label: 'Fatigue – Duration', type: 'text', dependsOn: { key: 'cc_fatigue', value: 'present' } },
         {
-          key: 'cc_chest_pain', label: 'Chest Pain (grade 0–3)', type: 'radio',
+          key: 'cc_chest_pain', label: 'Chest Pain', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
         },
         { key: 'cc_chest_pain_duration', label: 'Chest Pain – Duration', type: 'text', dependsOn: { key: 'cc_chest_pain', value: 'present' } },
         {
-          key: 'cc_nausea', label: 'Nausea / Vomiting (grade 0–3)', type: 'radio',
+          key: 'cc_nausea', label: 'Nausea / Vomiting', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
         },
         { key: 'cc_nausea_duration', label: 'Nausea – Duration', type: 'text', dependsOn: { key: 'cc_nausea', value: 'present' } },
         {
-          key: 'cc_skin_colour', label: 'Pale / Red Skin (grade 0–1)', type: 'radio',
+          key: 'cc_skin_colour', label: 'Pale / Red Skin', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
         },
         { key: 'hpi_heading', label: 'History of Present Illness', type: 'heading' },
@@ -523,8 +523,7 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
         { key: 'urine_chemical_at', label: 'Urine Chemical – AT', type: 'textarea' },
         { key: 'urine_microscopic_bt', label: 'Urine Microscopic – BT', type: 'textarea' },
         { key: 'urine_microscopic_at', label: 'Urine Microscopic – AT', type: 'textarea' },
-        { key: 'ecg_bt', label: 'ECG Finding – BT', type: 'textarea' },
-        { key: 'ecg_at', label: 'ECG Finding – AT', type: 'textarea' },
+        { key: 'ecg_findings', label: 'ECG Findings', type: 'textarea' },
       ],
     },
 
