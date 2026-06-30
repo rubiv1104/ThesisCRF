@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { Download, SlidersHorizontal, BarChart3, X, Check } from 'lucide-react'
 import { buildMasterColumns, resolveCell, defaultVisibleKeys, type MasterColumn } from '@/features/crf/masterColumns'
 
@@ -79,22 +80,30 @@ export function MasterChartTable({ rows, studyCode }: { rows: Row[]; studyCode: 
     return Array.from(m.entries())
   }, [allColumns])
 
-  function downloadCSV() {
-    const idCols = ['Sr. No', 'Name', 'Age', 'Sex', 'Group', 'CRF Status']
-    const headers = [...idCols, ...visibleCols.map((c) => c.label)]
-    const csvEsc = (v: string) => (v.includes(',') || v.includes('"') || v.includes('\n') ? `"${v.replace(/"/g, '""')}"` : v)
-    const lines = visible.map((r) => {
-      const idVals = [r.study_patient_id, r.patient_name, String(r.age ?? ''), r.gender ?? '', r.group, statusLabel(r.crf_status)]
-      const dataVals = visibleCols.map((c) => resolveCell(c, r.fields))
-      return [...idVals, ...dataVals].map(csvEsc).join(',')
-    })
-    const blob = new Blob([[headers.map(csvEsc).join(','), ...lines].join('\n')], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `master-chart-${studyCode}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+  // Excel export — one workbook with a separate sheet per trial group.
+  function downloadExcel() {
+    const header = ['Sr. No', 'Name', 'Age', 'Sex', 'Group', 'CRF Status', ...visibleCols.map((c) => c.label)]
+    const sheetFor = (groupRows: Row[]) => {
+      const aoa: (string | number)[][] = [header]
+      for (const r of groupRows) {
+        aoa.push([
+          r.study_patient_id, r.patient_name, r.age ?? '', r.gender ?? '', r.group, statusLabel(r.crf_status),
+          ...visibleCols.map((c) => resolveCell(c, r.fields)),
+        ])
+      }
+      return XLSX.utils.aoa_to_sheet(aoa)
+    }
+
+    const wb = XLSX.utils.book_new()
+    const groupA = rows.filter((r) => r.group === 'Group A')
+    const groupB = rows.filter((r) => r.group === 'Group B')
+    const others = rows.filter((r) => r.group !== 'Group A' && r.group !== 'Group B')
+
+    XLSX.utils.book_append_sheet(wb, sheetFor(groupA), 'Group A')
+    XLSX.utils.book_append_sheet(wb, sheetFor(groupB), 'Group B')
+    if (others.length) XLSX.utils.book_append_sheet(wb, sheetFor(others), 'Unassigned')
+
+    XLSX.writeFile(wb, `master-chart-${studyCode}.xlsx`)
   }
 
   if (allColumns.length === 0) {
@@ -125,8 +134,8 @@ export function MasterChartTable({ rows, studyCode }: { rows: Row[]; studyCode: 
           <button onClick={() => setShowPicker((v) => !v)} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
             <SlidersHorizontal size={13} /> Columns ({visibleCols.length})
           </button>
-          <button onClick={downloadCSV} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-            <Download size={13} /> CSV
+          <button onClick={downloadExcel} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+            <Download size={13} /> Excel (Group A + B sheets)
           </button>
         </div>
       </div>
@@ -221,7 +230,7 @@ export function MasterChartTable({ rows, studyCode }: { rows: Row[]; studyCode: 
       </div>
 
       <p className="text-xs text-slate-400">
-        {hydrated ? `${visibleCols.length} of ${allColumns.length} CRF fields shown` : 'Loading columns…'} · Columns are auto-generated from the {studyCode} CRF. Use “Columns” to add/remove, then Download CSV.
+        {hydrated ? `${visibleCols.length} of ${allColumns.length} CRF fields shown` : 'Loading columns…'} · Columns are auto-generated from the {studyCode} CRF. Use “Columns” to add/remove, then download Excel (Group A and Group B on separate sheets).
       </p>
     </div>
   )
