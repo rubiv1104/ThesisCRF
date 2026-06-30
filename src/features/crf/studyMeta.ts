@@ -56,7 +56,7 @@ export const STUDY_META: Record<string, StudyMeta> = {
   SHP2026: {
     code: 'SHP2026', batch: '2024-2027', scholar: 'Dr. Anjali Saroha',
     title: 'Efficacy of Amrutarajanyadi Kashaya and Agnimantha Yoga along with Siddharthadi Yoga in the management of Sheetapitta w.s.r. to Urticaria: An Open-Label Randomised Comparative Clinical study',
-    iec: '', ctri: '', supervisor: '', coSupervisor: '',
+    iec: '', ctri: '', supervisor: 'Dr. Sujata Yadav', coSupervisor: 'Dr. Rashmi Tokas Rana',
   },
   FLD2026: {
     code: 'FLD2026', batch: '2024-2027', scholar: 'Dr. Vaibhav Khandare',

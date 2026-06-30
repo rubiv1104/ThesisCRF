@@ -78,20 +78,18 @@ export async function deletePatient(patientId: string): Promise<{ success: true 
     return { error: 'You do not have permission to delete patients.' }
   }
 
-  // Delete cascade: crf_responses → crf_sections → crfs → patient
-  const { data: crfRow } = await supabase.from('crfs').select('id').eq('patient_id', patientId).maybeSingle()
-  if (crfRow) {
-    const { data: sections } = await supabase.from('crf_sections').select('id').eq('crf_id', crfRow.id)
-    if (sections?.length) {
-      const sectionIds = sections.map((s: any) => s.id)
-      await supabase.from('crf_responses').delete().in('section_id', sectionIds)
-    }
-    await supabase.from('crf_sections').delete().eq('crf_id', crfRow.id)
-    await supabase.from('crfs').delete().eq('id', crfRow.id)
-  }
-  await supabase.from('investigation_documents').delete().eq('patient_id', patientId)
-  const { error } = await supabase.from('patients').delete().eq('id', patientId)
+  // Deleting the patient cascades to crfs → crf_sections → crf_responses and
+  // investigation_documents via ON DELETE CASCADE foreign keys.
+  // Use .select() so a row blocked by RLS (0 rows, no error) is reported honestly.
+  const { data: deleted, error } = await supabase
+    .from('patients')
+    .delete()
+    .eq('id', patientId)
+    .select('id')
   if (error) return { error: error.message }
+  if (!deleted || deleted.length === 0) {
+    return { error: 'Delete failed — you may not have permission to delete this patient.' }
+  }
 
   return { success: true }
 }

@@ -147,7 +147,8 @@ function StudyCard({ code, studyTitle, investigator, studyPatients, isCollapsed,
                     isGroupA ? 'text-purple-500' : isGroupB ? 'text-blue-500' : 'text-slate-400'
                   }`}>· {groupPatients.length} patient{groupPatients.length !== 1 ? 's' : ''}</span>
                 </div>
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
                   <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
                     <tr>
                       <th className="px-4 py-2 text-left font-medium">ID</th>
@@ -162,6 +163,7 @@ function StudyCard({ code, studyTitle, investigator, studyPatients, isCollapsed,
                     {groupPatients.map((p) => <PatientRow key={p.id} p={p} />)}
                   </tbody>
                 </table>
+                </div>
               </div>
             )
           })}
@@ -242,8 +244,8 @@ function FlatView({ patients }: { patients: Patient[] }) {
       <p className="text-sm text-slate-400">No patients match your search</p>
     </div>
   ) : (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table className="w-full min-w-[820px] text-sm">
         <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
           <tr>
             <th className="px-4 py-2.5 text-left font-medium">ID</th>
