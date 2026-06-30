@@ -1,5 +1,4 @@
 import type { CrfTemplateDef } from '../types'
-import { sf12Section } from './shared/sf12'
 
 export const DMA2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'DMA2026',
@@ -914,6 +913,5 @@ export const DMA2026_TEMPLATE: CrfTemplateDef = {
         { key: 'mcs_at', label: 'MCS Score AT', type: 'number' },
       ],
     },
-    sf12Section(),
   ],
 }

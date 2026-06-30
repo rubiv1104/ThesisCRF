@@ -1,5 +1,4 @@
 import type { CrfTemplateDef } from '../types'
-import { sf12Section } from './shared/sf12'
 
 export const DM2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'DM2026',
@@ -568,6 +567,5 @@ export const DM2026_TEMPLATE: CrfTemplateDef = {
         { key: 'date_completion', label: 'Date of Completion', type: 'date' },
       ],
     },
-    sf12Section(),
   ],
 }
