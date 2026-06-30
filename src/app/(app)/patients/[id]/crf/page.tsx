@@ -5,6 +5,7 @@ import { CrfView } from '@/features/crf/components/CrfView'
 import { CrfStatusBanner } from '@/features/crf/components/CrfStatusBanner'
 import { InvestigationUpload } from '@/features/investigations/components/InvestigationUpload'
 import { ConsentUpload } from '@/features/investigations/components/ConsentUpload'
+import { AssessmentsPanel } from '@/features/assessments/AssessmentsPanel'
 import { APP_NAME } from '@/constants'
 import { Printer, FileDown } from 'lucide-react'
 import { studyTitle, studyBatch, getStudyMeta } from '@/features/crf/studyMeta'
@@ -127,6 +128,9 @@ export default async function CrfPage({ params }: PageProps) {
 
       {/* Consent form — required before data collection */}
       <ConsentUpload patientId={id} readOnly={isReadOnly} />
+
+      {/* Assessment scales (Assessment Engine) */}
+      <AssessmentsPanel patientId={id} studyCode={studyCode} readOnly={isReadOnly || crfData?.validation_status === 'approved'} />
 
       {/* CRF form — locked once approved */}
       <CrfView
