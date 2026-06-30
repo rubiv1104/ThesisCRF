@@ -38,6 +38,17 @@ export default async function FeedbackInboxPage() {
   const open = feedbacks.filter((f) => f.status === 'open').length
   const inProgress = feedbacks.filter((f) => f.status === 'in_progress').length
 
+  // Bucket is private — mint a short-lived signed URL for each attachment.
+  // attachment_url holds a storage path now; legacy rows hold a full public URL.
+  await Promise.all(feedbacks.map(async (f) => {
+    if (!f.attachment_url) return
+    const marker = '/feedback-attachments/'
+    const idx = String(f.attachment_url).indexOf(marker)
+    const path = idx >= 0 ? String(f.attachment_url).slice(idx + marker.length) : String(f.attachment_url)
+    const { data } = await (supabase as any).storage.from('feedback-attachments').createSignedUrl(path, 3600)
+    f.signed_url = data?.signedUrl ?? null
+  }))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -93,9 +104,9 @@ export default async function FeedbackInboxPage() {
                     {fb.email ? ` (${fb.email})` : ''}
                     {' · '}{new Date(fb.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
                   </p>
-                  {fb.attachment_url && (
+                  {fb.signed_url && (
                     <a
-                      href={fb.attachment_url}
+                      href={fb.signed_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"

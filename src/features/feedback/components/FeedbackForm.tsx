@@ -72,10 +72,8 @@ export function FeedbackForm({ userId, fullName, email, studyCode }: Props) {
         return
       }
 
-      const { data: urlData } = supabase.storage
-        .from('feedback-attachments')
-        .getPublicUrl(uploadData.path)
-      attachmentUrl = urlData?.publicUrl ?? null
+      // Store the storage PATH (bucket is private); admin views via a signed URL.
+      attachmentUrl = uploadData?.path ?? path
     }
 
     const { error } = await supabase.from('feedbacks').insert({
