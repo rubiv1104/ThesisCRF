@@ -38,8 +38,9 @@ function valueCell(text: string, width: number) {
   })
 }
 
-export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
+  const deid = new URL(req.url).searchParams.get('deid') === '1'
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = (await createClient()) as any
   const { data: { user } } = await supabase.auth.getUser()
@@ -48,10 +49,14 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const data = await loadCrfData(supabase, id)
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  // De-identified export: replace the patient name with the study ID everywhere.
+  if (deid) data.patient = { ...data.patient, patient_name: data.patient.study_patient_id }
+  const displayName = data.patient.patient_name
+
   // ECZ2026 has a faithful, study-specific proforma rebuild
   if (data.studyCode === 'ECZ2026') {
     const body = buildEcz2026Body(data.values, data.patient)
-    return packDocx(body, data.studyCode, data.patient.study_patient_id)
+    return packDocx(body, data.studyCode, (deid ? 'deid_' : '') + data.patient.study_patient_id)
   }
 
   const doc = assembleCrf(data.studyCode, data.values)
@@ -100,7 +105,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     columnWidths: [idWidth, idWidth, idWidth, idWidth],
     rows: [
       new TableRow({ children: [
-        labelCell('Patient Name', idWidth), valueCell(data.patient.patient_name, idWidth),
+        labelCell(deid ? 'Patient ID' : 'Patient Name', idWidth), valueCell(displayName, idWidth),
         labelCell('Patient ID', idWidth), valueCell(data.patient.study_patient_id, idWidth),
       ] }),
       new TableRow({ children: [
@@ -198,7 +203,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const m = getStudyMeta(data.studyCode)
   children.push(signatoriesTable(m.scholar, m.supervisor))
 
-  return packDocx(children, data.studyCode, data.patient.study_patient_id)
+  return packDocx(children, data.studyCode, (deid ? 'deid_' : '') + data.patient.study_patient_id)
 }
 
 /** Bottom signatory block: Research Scholar / Supervisor. */

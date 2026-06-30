@@ -37,6 +37,7 @@ export function MasterChartTable({ rows, studyCode }: { rows: Row[]; studyCode: 
   const [showPicker, setShowPicker] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+  const [deid, setDeid] = useState(false)
 
   // Load saved column selection (or sensible default) after mount
   useEffect(() => {
@@ -81,13 +82,14 @@ export function MasterChartTable({ rows, studyCode }: { rows: Row[]; studyCode: 
   }, [allColumns])
 
   // Excel export — one workbook with a separate sheet per trial group.
+  // When `deid` is set, the patient Name column is omitted (study ID only).
   function downloadExcel() {
-    const header = ['Sr. No', 'Name', 'Age', 'Sex', 'Group', 'CRF Status', ...visibleCols.map((c) => c.label)]
+    const header = ['Sr. No', ...(deid ? [] : ['Name']), 'Age', 'Sex', 'Group', 'CRF Status', ...visibleCols.map((c) => c.label)]
     const sheetFor = (groupRows: Row[]) => {
       const aoa: (string | number)[][] = [header]
       for (const r of groupRows) {
         aoa.push([
-          r.study_patient_id, r.patient_name, r.age ?? '', r.gender ?? '', r.group, statusLabel(r.crf_status),
+          r.study_patient_id, ...(deid ? [] : [r.patient_name]), r.age ?? '', r.gender ?? '', r.group, statusLabel(r.crf_status),
           ...visibleCols.map((c) => resolveCell(c, r.fields)),
         ])
       }
@@ -103,7 +105,7 @@ export function MasterChartTable({ rows, studyCode }: { rows: Row[]; studyCode: 
     XLSX.utils.book_append_sheet(wb, sheetFor(groupB), 'Group B')
     if (others.length) XLSX.utils.book_append_sheet(wb, sheetFor(others), 'Unassigned')
 
-    XLSX.writeFile(wb, `master-chart-${studyCode}.xlsx`)
+    XLSX.writeFile(wb, `master-chart-${studyCode}${deid ? '-deidentified' : ''}.xlsx`)
   }
 
   if (allColumns.length === 0) {
@@ -134,6 +136,10 @@ export function MasterChartTable({ rows, studyCode }: { rows: Row[]; studyCode: 
           <button onClick={() => setShowPicker((v) => !v)} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
             <SlidersHorizontal size={13} /> Columns ({visibleCols.length})
           </button>
+          <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+            <input type="checkbox" checked={deid} onChange={(e) => setDeid(e.target.checked)} className="accent-amber-600" />
+            De-identify (no names)
+          </label>
           <button onClick={downloadExcel} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
             <Download size={13} /> Excel (Group A + B sheets)
           </button>

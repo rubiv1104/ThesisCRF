@@ -10,6 +10,7 @@ export const metadata = { title: `Print CRF | ${APP_NAME}` }
 
 interface PageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ deid?: string }>
 }
 
 function fmtDate(d: string | null) {
@@ -19,8 +20,9 @@ function fmtDate(d: string | null) {
   return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-export default async function PrintCrfPage({ params }: PageProps) {
+export default async function PrintCrfPage({ params, searchParams }: PageProps) {
   const { id } = await params
+  const deid = (await searchParams).deid === '1'
   const supabase = (await createClient()) as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -28,6 +30,7 @@ export default async function PrintCrfPage({ params }: PageProps) {
   const data = await loadCrfData(supabase, id)
   if (!data) notFound()
 
+  const displayName = deid ? data.patient.study_patient_id : data.patient.patient_name
   const doc = assembleCrf(data.studyCode, data.values)
 
   return (
@@ -44,7 +47,7 @@ export default async function PrintCrfPage({ params }: PageProps) {
         @page { margin: 16mm; size: A4; }
       `}</style>
 
-      <PrintToolbar patientId={id} docxHref={`/api/crf/${id}/docx`} />
+      <PrintToolbar patientId={id} docxHref={`/api/crf/${id}/docx${deid ? '?deid=1' : ''}`} deid={deid} />
 
       <div className="crf-sheet mx-auto my-6 max-w-[800px] bg-white p-10 shadow-md print:my-0">
         {/* Header */}
@@ -68,8 +71,8 @@ export default async function PrintCrfPage({ params }: PageProps) {
         <table className="mb-6 w-full border-collapse text-sm">
           <tbody>
             <tr>
-              <td className="border border-slate-300 bg-slate-50 px-3 py-1.5 font-medium text-slate-600 w-1/4">Patient Name</td>
-              <td className="border border-slate-300 px-3 py-1.5 text-slate-900">{data.patient.patient_name}</td>
+              <td className="border border-slate-300 bg-slate-50 px-3 py-1.5 font-medium text-slate-600 w-1/4">{deid ? 'Patient ID' : 'Patient Name'}</td>
+              <td className="border border-slate-300 px-3 py-1.5 text-slate-900">{displayName}</td>
               <td className="border border-slate-300 bg-slate-50 px-3 py-1.5 font-medium text-slate-600 w-1/4">Patient ID</td>
               <td className="border border-slate-300 px-3 py-1.5 text-slate-900">{data.patient.study_patient_id}</td>
             </tr>
