@@ -188,7 +188,27 @@ const AHA_ITEMS: QItem[] = [
   { label: 'Pale / Red skin', options: ['Absent', 'Present'] },
 ]
 
+// ── Tamaka Shwasa clinical symptom grading (bronchial asthma) ─────────────────
+const TAMAKA_ITEMS: QItem[] = [
+  { label: 'Frequency of attacks (Shwasa Vega)', options: ['0 No attack (1 mo)', '1 Once a month', '2 Once in 2 weeks', '3 Once a week', '4 Twice a week', '5 ≥ Once a day'] },
+  { label: 'Duration of attack', options: ['0 No attack', '1 ½–1 h', '2 1–6 h', '3 6–12 h', '4 12 h', '5 > 12 h'] },
+  { label: 'Intensity of attack', options: ['0 Asymptomatic', '1 Intermittent < 1/wk', '2 > 1/wk, < 1/day', '3 Daily', '4 Continuous'] },
+  { label: 'Kasam (Cough)', options: ['0 No cough', '1 Dry / easy expectoration', '2 Mild pain & difficulty', '3 Severe pain / restlessness', '4 Coughing to fainting'] },
+  { label: 'Kapha Nishthivanam (Expectoration)', options: ['0 None', '1 Early morning only', '2 2–3 times daily', '3 Always'] },
+  { label: 'Rudhho Ghur-ghurakam (Wheezing)', options: ['0 None', '1 Early am, no medicine', '2 Early am, needs medicine', '3 Early am + occasional daytime', '4 All day, needs medicine', '5 All day, unresponsive'] },
+  { label: 'Urashoola / Parshvashoola (Chest pain)', options: ['0 None', '1 With attack', '2 Often, relieved by snehana/swedana', '3 Often without attack, relieved', '4 Always'] },
+  { label: 'Asino labhate Saukhyam (Relief on sitting)', options: ['0 Relief lying', '1 Temporarily better sitting', '2 Sitting gives relief', '3 Must sit, cannot sleep'] },
+  { label: 'Rhonchi / Crepts', options: ['0 Few on forced breathing', '1 Few scattered bilateral', '2 Between grade 1 & 3', '3 Innumerable high-pitched'] },
+  { label: 'Peenasa', options: ['0 None', '1 During attack, subsides 1–2 d', '2 Persists 1 wk after attack', '3 Often without attack', '4 Always'] },
+]
+
 export const EXTRA_SCALES: AssessmentDef[] = [
+  {
+    code: 'TamakaShwasa', name: 'Tamaka Shwasa Clinical Symptom Score', short: 'Tamaka Sx', category: 'Clinical Score',
+    studies: ['AST2026'], visits: ['BT', 'D7', 'D14', 'D30', 'D45', 'D60', 'AT'], range: '0–40',
+    score: sumScore(10), Workspace: makeWorkspace(TAMAKA_ITEMS),
+    interpret: (t) => t === 0 ? 'Asymptomatic' : t <= 8 ? 'Minimal' : t <= 16 ? 'Mild' : t <= 26 ? 'Moderate' : 'Severe',
+  },
   {
     code: 'UAS7', name: 'Urticaria Activity Score over 7 days', short: 'UAS7', category: 'Dermatology',
     studies: ['SHP2026'], visits: ['BT', 'D7', 'D14', 'D21', 'D45', 'D60', 'D75', 'AT'], range: '0–42',
