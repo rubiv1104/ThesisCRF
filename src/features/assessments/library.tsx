@@ -80,23 +80,32 @@ function EasiWorkspace({ value, onChange }: { value: Responses; onChange: (r: Re
     onChange({ ...value, [region]: { ...cur, [field]: v } })
   }
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {EASI_REGIONS.map((reg) => {
-        const v = easiRegion(value, reg.key)
-        const sub = +(v.a * (v.e + v.i + v.ex + v.l) * reg.mult).toFixed(2)
-        return (
-          <div key={reg.key} className="rounded-lg border border-slate-200 p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-slate-700">{reg.label} <span className="text-slate-400">×{reg.mult}</span></p>
-              <span className="text-sm font-bold text-blue-700">{sub.toFixed(2)}</span>
+    <div className="space-y-3">
+      <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <strong>Set the Area first.</strong> EASI = Area × (E+I+Ex+L) × region weight — a region with <strong>Area 0</strong> scores 0 even if the signs are severe.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {EASI_REGIONS.map((reg) => {
+          const v = easiRegion(value, reg.key)
+          const sub = +(v.a * (v.e + v.i + v.ex + v.l) * reg.mult).toFixed(2)
+          const needsArea = v.a === 0 && (v.e + v.i + v.ex + v.l) > 0
+          return (
+            <div key={reg.key} className="rounded-lg border border-slate-200 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-slate-700">{reg.label} <span className="text-slate-400">×{reg.mult}</span></p>
+                <span className="text-sm font-bold text-blue-700">{sub.toFixed(2)}</span>
+              </div>
+              <div>
+                <label className="mb-0.5 block text-[11px] font-semibold text-slate-700">Area (% of region) {needsArea && <span className="text-amber-600">← set this to score</span>}</label>
+                <div className={needsArea ? 'rounded-lg ring-2 ring-amber-400' : ''}><Select value={v.a} onChange={(x) => set(reg.key, 'a', x)} options={AREA} /></div>
+              </div>
+              {EASI_SIGNS.map((s) => (
+                <div key={s.key}><label className="mb-0.5 block text-[11px] text-slate-500">{s.label}</label><Select value={v[s.key as 'e']} onChange={(x) => set(reg.key, s.key, x)} options={INT} /></div>
+              ))}
             </div>
-            <div><label className="mb-0.5 block text-[11px] text-slate-500">Area</label><Select value={v.a} onChange={(x) => set(reg.key, 'a', x)} options={AREA} /></div>
-            {EASI_SIGNS.map((s) => (
-              <div key={s.key}><label className="mb-0.5 block text-[11px] text-slate-500">{s.label}</label><Select value={v[s.key as 'e']} onChange={(x) => set(reg.key, s.key, x)} options={INT} /></div>
-            ))}
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
