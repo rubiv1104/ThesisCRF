@@ -16,7 +16,6 @@ import {
   Inbox,
   Scale,
   GraduationCap,
-  BookOpenCheck,
   TableProperties,
   FileText,
 } from 'lucide-react'
@@ -35,7 +34,7 @@ const INVESTIGATOR_NAV = [
 
 const TEACHER_NAV = [
   { label: 'Students\' CRFs', href: '/teacher', icon: GraduationCap },
-  { label: 'CRF Review', href: '/teacher/review', icon: BookOpenCheck },
+  { label: 'CRF Preview', href: '/teacher/template', icon: FileText },
   { label: 'Master Chart', href: '/master-chart', icon: TableProperties },
   { label: 'Assessments & Scales', href: '/assessments', icon: Scale },
   { label: 'Settings', href: '/settings', icon: Settings },

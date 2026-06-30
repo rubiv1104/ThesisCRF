@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
-import { expectedSlots } from '@/features/crf/studyMeta'
+import { expectedSlots, studyTitle } from '@/features/crf/studyMeta'
 import { GuidePatients, type GuidePatient } from './GuidePatients'
 
 export const metadata = { title: `Guide Dashboard | ${APP_NAME}` }
@@ -124,7 +124,7 @@ export default async function TeacherDashboardPage() {
               <div key={l.studies?.id ?? i} className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-2.5">
                 <div>
                   <span className="font-mono text-xs font-bold text-blue-700">{l.studies?.study_code}</span>
-                  <span className="ml-3 text-xs text-slate-600">{l.studies?.study_title}</span>
+                  <span className="ml-3 text-xs text-slate-600">{studyTitle(l.studies?.study_code ?? '') || l.studies?.study_title}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Link
