@@ -8,7 +8,7 @@ import { ConsentUpload } from '@/features/investigations/components/ConsentUploa
 import { AssessmentsPanel } from '@/features/assessments/AssessmentsPanel'
 import { APP_NAME } from '@/constants'
 import { Printer, FileDown } from 'lucide-react'
-import { studyTitle, studyBatch, getStudyMeta } from '@/features/crf/studyMeta'
+import { studyTitle, studyBatch, getStudyMeta, expectedSlots } from '@/features/crf/studyMeta'
 
 export const metadata = { title: `CRF | ${APP_NAME}` }
 
@@ -26,7 +26,7 @@ export default async function CrfPage({ params }: PageProps) {
   const [{ data: viewerProfile }, { data: raw }] = await Promise.all([
     supabase.from('user_profiles').select('role').eq('id', user?.id).single(),
     supabase.from('patients')
-      .select('id, patient_name, study_patient_id, study_id, studies(study_code), research_groups(group_name)')
+      .select('id, patient_name, study_patient_id, age, gender, study_id, studies(study_code), research_groups(group_name)')
       .eq('id', id)
       .single(),
   ])
@@ -53,6 +53,27 @@ export default async function CrfPage({ params }: PageProps) {
   ])
 
   const crfData = crf as any
+
+  // Patient-summary metrics (at-a-glance strip)
+  const [consentRes, invRes, assessRes, fillRes] = await Promise.all([
+    supabase.from('investigation_documents').select('id', { count: 'exact', head: true }).eq('patient_id', id).eq('doc_type', 'consent'),
+    supabase.from('investigation_documents').select('id', { count: 'exact', head: true }).eq('patient_id', id).eq('doc_type', 'investigation'),
+    supabase.from('assessment_results').select('id', { count: 'exact', head: true }).eq('patient_id', id),
+    supabase.rpc('crf_fill_counts'),
+  ])
+  const hasConsent = (consentRes.count ?? 0) > 0
+  const investigationCount = invRes.count ?? 0
+  const assessmentCount = assessRes.count ?? 0
+  const filled = ((fillRes.data ?? []) as any[]).find((f) => f.patient_id === id)?.filled ?? 0
+  const expected = expectedSlots(studyCode)
+  const completionPct = expected > 0 ? Math.min(100, Math.round((filled / expected) * 100)) : 0
+  const pctColor = completionPct >= 90 ? 'bg-green-500' : completionPct >= 50 ? 'bg-blue-500' : completionPct >= 20 ? 'bg-amber-500' : 'bg-slate-300'
+  const statusLabel = crfData?.validation_status === 'approved' ? 'Approved'
+    : crfData?.validation_status === 'submitted' ? 'Awaiting Review'
+    : crfData?.validation_status === 'returned' ? 'Returned' : 'In Progress'
+  const statusCls = crfData?.validation_status === 'approved' ? 'bg-green-50 text-green-700'
+    : crfData?.validation_status === 'submitted' ? 'bg-amber-100 text-amber-700'
+    : crfData?.validation_status === 'returned' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'
   const excelData: Record<string, string> = (uploadedRaw as any)?.data ?? {}
 
   return (
@@ -108,6 +129,37 @@ export default async function CrfPage({ params }: PageProps) {
           >
             <FileDown size={14} /> Word
           </a>
+        </div>
+      </div>
+
+      {/* Patient summary — at-a-glance metrics */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Age / Sex</p>
+          <p className="mt-0.5 text-sm font-semibold text-slate-800">{patient.age != null ? `${patient.age}y` : '—'} / {patient.gender ?? '—'}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Group</p>
+          <p className="mt-0.5 text-sm font-semibold text-slate-800">{groupName || '—'}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">CRF Status</p>
+          <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusCls}`}>{statusLabel}</span>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Completion</p>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100"><span className={`block h-full rounded-full ${pctColor}`} style={{ width: `${completionPct}%` }} /></span>
+            <span className="text-xs font-semibold text-slate-700">{completionPct}%</span>
+          </div>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Consent</p>
+          <p className={`mt-0.5 text-sm font-semibold ${hasConsent ? 'text-green-700' : 'text-amber-600'}`}>{hasConsent ? '✓ On file' : 'Missing'}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Reports / Scales</p>
+          <p className="mt-0.5 text-sm font-semibold text-slate-800">{investigationCount} / {assessmentCount}</p>
         </div>
       </div>
 
