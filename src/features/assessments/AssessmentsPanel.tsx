@@ -15,7 +15,11 @@ export function AssessmentsPanel({ patientId, studyCode, readOnly = false }: { p
     <div className="space-y-3">
       <div>
         <h2 className="text-base font-semibold text-slate-800">Assessment Scales</h2>
-        <p className="text-xs text-slate-400">Tap a visit to enter or edit. Score &amp; interpretation are computed and saved automatically.</p>
+        <p className="text-xs text-slate-400">
+          {readOnly
+            ? 'This CRF is locked (approved or read-only) — tap a filled visit to view it. To edit, the guide can re-open the CRF for correction.'
+            : 'Tap a visit to enter or edit. Score & interpretation are computed and saved automatically.'}
+        </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {defs.map((def) => (

@@ -75,15 +75,16 @@ export function AssessmentCard({ patientId, def, readOnly = false }: { patientId
         <div className="flex flex-wrap gap-1.5">
           {def.visits.map((visit) => {
             const r = byVisit[visit]
-            const filled = r && r.total != null
+            const filled = !!(r && r.total != null)
+            const interactive = !readOnly || filled // read-only can still VIEW a filled result
             return (
               <button
                 key={visit}
-                disabled={readOnly && !filled}
-                onClick={() => !readOnly && setEditing({ visit, value: r?.responses ?? {} })}
+                disabled={!interactive}
+                onClick={() => { if (interactive) setEditing({ visit, value: r?.responses ?? {} }) }}
                 className={`rounded-lg border px-2.5 py-1.5 text-left text-xs transition-colors ${
                   filled ? 'border-blue-200 bg-blue-50 hover:bg-blue-100' : 'border-dashed border-slate-200 text-slate-400 hover:bg-slate-50'
-                } ${readOnly && !filled ? 'cursor-default opacity-60' : ''}`}
+                } ${!interactive ? 'cursor-default opacity-60' : ''}`}
                 title={readOnly ? 'View' : 'Enter / edit'}
               >
                 <span className="block font-medium text-slate-600">{visit}</span>
@@ -101,6 +102,7 @@ export function AssessmentCard({ patientId, def, readOnly = false }: { patientId
           def={def}
           visit={editing.visit}
           value={editing.value}
+          readOnly={readOnly}
           onChange={(v) => setEditing({ ...editing, value: v })}
           onClose={() => setEditing(null)}
           onSave={save}
@@ -111,8 +113,8 @@ export function AssessmentCard({ patientId, def, readOnly = false }: { patientId
   )
 }
 
-function EditModal({ def, visit, value, onChange, onClose, onSave, saving }: {
-  def: AssessmentDef; visit: string; value: Responses
+function EditModal({ def, visit, value, readOnly, onChange, onClose, onSave, saving }: {
+  def: AssessmentDef; visit: string; value: Responses; readOnly: boolean
   onChange: (v: Responses) => void; onClose: () => void; onSave: () => void; saving: boolean
 }) {
   const { total, interpretation } = useScore(def, value)
@@ -128,7 +130,9 @@ function EditModal({ def, visit, value, onChange, onClose, onSave, saving }: {
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
-          <def.Workspace value={value} onChange={onChange} />
+          <div className={readOnly ? 'pointer-events-none select-none opacity-90' : ''}>
+            <def.Workspace value={value} onChange={onChange} />
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3">
@@ -137,10 +141,12 @@ function EditModal({ def, visit, value, onChange, onClose, onSave, saving }: {
             <p className="text-xl font-bold text-blue-700">{total} <span className="text-sm font-medium text-blue-500">{interpretation}</span></p>
           </div>
           <div className="flex gap-2">
-            <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white">Cancel</button>
-            <button onClick={onSave} disabled={saving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">
-              {saving && <Loader2 size={14} className="animate-spin" />} Save {visit}
-            </button>
+            <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-white">Close</button>
+            {!readOnly && (
+              <button onClick={onSave} disabled={saving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">
+                {saving && <Loader2 size={14} className="animate-spin" />} Save {visit}
+              </button>
+            )}
           </div>
         </div>
       </div>
