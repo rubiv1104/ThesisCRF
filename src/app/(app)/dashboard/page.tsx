@@ -112,8 +112,8 @@ export default async function DashboardPage() {
           <p className="mt-1 text-xs text-slate-400">Click &ldquo;Add Patient&rdquo; to enrol your first patient</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full min-w-[680px] text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-5 py-3 text-left font-medium">ID</th>
