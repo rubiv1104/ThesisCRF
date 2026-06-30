@@ -18,6 +18,7 @@ import {
   GraduationCap,
   TableProperties,
   FileText,
+  Bell,
 } from 'lucide-react'
 import { DEV_MODE_KEY } from '@/features/dev/DevModeToggle'
 import { cn } from '@/utils'
@@ -25,6 +26,7 @@ import { APP_NAME } from '@/constants'
 
 const INVESTIGATOR_NAV = [
   { label: 'My Patients', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
   { label: 'CRF Preview', href: '/crf-preview', icon: FileText },
   { label: 'Master Chart', href: '/master-chart', icon: TableProperties },
   { label: 'Investigations', href: '/investigations', icon: FlaskConical },
@@ -34,7 +36,8 @@ const INVESTIGATOR_NAV = [
 ]
 
 const TEACHER_NAV = [
-  { label: 'Students\' CRFs', href: '/teacher', icon: GraduationCap },
+  { label: 'My Patients', href: '/teacher', icon: GraduationCap },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
   { label: 'CRF Preview', href: '/teacher/template', icon: FileText },
   { label: 'Master Chart', href: '/master-chart', icon: TableProperties },
   { label: 'Assessments & Scales', href: '/assessments', icon: Scale },
