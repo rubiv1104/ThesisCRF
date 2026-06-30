@@ -11,6 +11,7 @@
  * To add a scale: add one entry to ASSESSMENT_LIBRARY. Nothing else changes.
  */
 import { useMemo, type ReactElement } from 'react'
+import { EXTRA_SCALES } from './scales'
 
 export type Responses = Record<string, unknown>
 
@@ -179,6 +180,7 @@ export const ASSESSMENT_LIBRARY: Record<string, AssessmentDef> = {
     studies: ['ECZ2026', 'SHP2026'], visits: ['BT', 'AT'], range: '0–30',
     score: dlqiScore, interpret: dlqiInterpret, Workspace: DlqiWorkspace,
   },
+  ...Object.fromEntries(EXTRA_SCALES.map((d) => [d.code, d])),
 }
 
 export function assessmentsForStudy(studyCode: string): AssessmentDef[] {
