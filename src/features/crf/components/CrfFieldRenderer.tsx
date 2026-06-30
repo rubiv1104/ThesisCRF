@@ -202,7 +202,7 @@ function CalculatedField({
     : computedNum !== null ? String(computedNum) : '—'
 
   return (
-    <div className="col-span-2 flex flex-col gap-1.5">
+    <div className="sm:col-span-2 flex flex-col gap-1.5">
       <Label className="text-sm text-slate-700">{field.label}</Label>
       <div className={cn(
         'flex items-center gap-3 rounded-lg border px-4 py-3',
@@ -296,19 +296,19 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
 
   if (field.type === 'heading') {
     return (
-      <div className="col-span-2 mt-3 border-b border-slate-200 pb-1">
+      <div className="sm:col-span-2 mt-3 border-b border-slate-200 pb-1">
         <p className="text-sm font-semibold text-slate-700">{field.label}</p>
       </div>
     )
   }
 
   if (field.type === 'divider') {
-    return <div className="col-span-2 border-t border-slate-100" />
+    return <div className="sm:col-span-2 border-t border-slate-100" />
   }
 
   if (field.type === 'assessment_grid') {
     return (
-      <div className="col-span-2 overflow-x-auto">
+      <div className="min-w-0 sm:col-span-2 overflow-x-auto">
         <p className="mb-2 text-sm font-medium text-slate-700">{field.label}</p>
         <table className="w-full border-collapse text-xs">
           <thead>
@@ -362,11 +362,17 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
     )
   }
 
+  // Full-width fields: long-form inputs, long labels, and multi-option groups.
+  const isLongLabel = field.label.length > 55
+  const manyOpts = (field.options?.length ?? 0) > 3
+  const fullWidth = field.type === 'textarea' || isLongLabel ||
+    ((field.type === 'radio' || field.type === 'checkbox_group') && manyOpts)
+
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={cn('flex min-w-0 flex-col gap-1.5', fullWidth && 'sm:col-span-2')}>
       <Label
         htmlFor={field.key}
-        className={cn('text-sm text-slate-700', field.required && "after:ml-0.5 after:text-red-500 after:content-['*']")}
+        className={cn('text-sm leading-snug text-slate-700', field.required && "after:ml-0.5 after:text-red-500 after:content-['*']")}
       >
         {field.label}
         {field.unit && <span className="ml-1 text-xs font-normal text-slate-400">({field.unit})</span>}
@@ -390,7 +396,7 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
             value={value}
             suggestion={suggestion}
             placeholder={field.placeholder}
-            className="max-w-[180px]"
+            className="sm:max-w-[220px]"
             onChange={(v) => onChange(field.key, v)}
           />
           {rangeWarning(field.key, value) && (
@@ -406,7 +412,7 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
           value={value}
           onChange={(e) => onChange(field.key, e.target.value)}
           max={new Date().toISOString().split('T')[0]}
-          className="max-w-[200px]"
+          className="sm:max-w-[220px]"
         />
       )}
 
@@ -445,7 +451,7 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
 
       {field.type === 'select' && (
         <Select value={value ?? ''} onValueChange={(v) => onChange(field.key, v ?? '')}>
-          <SelectTrigger id={field.key} className="max-w-xs">
+          <SelectTrigger id={field.key} className="sm:max-w-xs">
             <SelectValue placeholder="Select…" />
           </SelectTrigger>
           <SelectContent>
@@ -462,12 +468,12 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
         <RadioGroup
           value={value}
           onValueChange={(v) => onChange(field.key, v)}
-          className="flex flex-wrap gap-x-6 gap-y-2"
+          className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2"
         >
           {field.options?.map((opt) => (
-            <div key={opt.value} className="flex items-center gap-2">
-              <RadioGroupItem value={opt.value} id={`${field.key}_${opt.value}`} />
-              <Label htmlFor={`${field.key}_${opt.value}`} className="cursor-pointer font-normal">
+            <div key={opt.value} className="flex min-w-0 items-start gap-2">
+              <RadioGroupItem value={opt.value} id={`${field.key}_${opt.value}`} className="mt-0.5 shrink-0" />
+              <Label htmlFor={`${field.key}_${opt.value}`} className="cursor-pointer font-normal leading-snug">
                 {opt.label}
               </Label>
             </div>
@@ -476,14 +482,15 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
       )}
 
       {field.type === 'checkbox_group' && (
-        <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-x-6">
           {field.options?.map((opt) => {
             const checked = value ? value.split(',').includes(opt.value) : false
             return (
-              <div key={opt.value} className="flex items-center gap-2">
+              <div key={opt.value} className="flex min-w-0 items-start gap-2">
                 <Checkbox
                   id={`${field.key}_${opt.value}`}
                   checked={checked}
+                  className="mt-0.5 shrink-0"
                   onCheckedChange={(c) => {
                     const current = value ? value.split(',').filter(Boolean) : []
                     const next = c
@@ -492,7 +499,7 @@ export function CrfFieldRenderer({ field, value, onChange, allValues, suggestion
                     onChange(field.key, next.join(','))
                   }}
                 />
-                <Label htmlFor={`${field.key}_${opt.value}`} className="cursor-pointer font-normal">
+                <Label htmlFor={`${field.key}_${opt.value}`} className="cursor-pointer font-normal leading-snug">
                   {opt.label}
                 </Label>
               </div>

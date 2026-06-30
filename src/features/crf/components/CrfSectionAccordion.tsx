@@ -75,8 +75,8 @@ export function CrfSectionAccordion({
                 )}
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-5 pb-5">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <AccordionContent className="px-4 pb-5 sm:px-5">
+              <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 sm:gap-5">
                 {visibleFields.map((field) => (
                   <CrfFieldRenderer
                     key={field.key}
