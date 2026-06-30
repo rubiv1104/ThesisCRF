@@ -281,8 +281,23 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
     }
   }, [supabase])
 
-  // Flush any remaining changes when component unmounts
+  // Flush any remaining changes when component unmounts (in-app navigation)
   useEffect(() => () => { flushPending() }, [flushPending])
+
+  // Warn before a full-page unload (tab close / refresh / external link) while
+  // edits are still queued, and fire a best-effort save. pendingRef is read live
+  // so the listener stays correct without re-registering.
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (Object.keys(pendingRef.current).length > 0) {
+        flushPending()
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [flushPending])
 
   const onChange = useCallback(
     (key: string, value: string) => {
