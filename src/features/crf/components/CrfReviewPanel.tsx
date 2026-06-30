@@ -91,6 +91,19 @@ export function CrfReviewPanel({
 
   async function saveValidation(status: string) {
     if (!crfId) { toast.error('No CRF record found for this patient.'); return }
+
+    // Returning / re-opening requires a reason and (if approved) a confirmation.
+    if (status === 'returned') {
+      if (!validationNote.trim()) {
+        toast.error('Please enter the reason / correction note before returning the CRF.')
+        return
+      }
+      if (validationStatus === 'approved' &&
+          !confirm('Re-open this APPROVED CRF for correction?\n\nIt will be unlocked for the student to edit. This action is recorded in the audit log.')) {
+        return
+      }
+    }
+
     setSavingValidation(true)
     const { error } = await supabase
       .from('crfs')
@@ -164,7 +177,7 @@ export function CrfReviewPanel({
             className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
           >
             {savingValidation ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
-            Return for Correction {validationStatus === 'returned' && '✓'}
+            {validationStatus === 'approved' ? 'Unlock for Correction' : 'Return for Correction'} {validationStatus === 'returned' && '✓'}
           </button>
           {(validationStatus === 'approved' || validationStatus === 'returned') && (
             <button
