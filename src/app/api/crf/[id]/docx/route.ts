@@ -199,6 +199,25 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     children.push(new Paragraph({ children: [new TextRun({ text: `No template registered for ${data.studyCode}.`, size: 18 })] }))
   }
 
+  // Assessment Engine scores
+  if (data.assessments.length > 0) {
+    children.push(new Paragraph({
+      spacing: { before: 240, after: 100 },
+      children: [new TextRun({ text: 'Assessment Scores', bold: true, size: 22, color: '1E293B' })],
+    }))
+    const w = [2400, 2400, 1800, 2760]
+    const head = new TableRow({ tableHeader: true, children: [
+      labelCell('Scale', w[0]!), labelCell('Visit', w[1]!), labelCell('Score', w[2]!), labelCell('Interpretation', w[3]!),
+    ] })
+    const rows = [...data.assessments]
+      .sort((a, b) => a.assessment_code.localeCompare(b.assessment_code) || a.visit_label.localeCompare(b.visit_label))
+      .map((a) => new TableRow({ children: [
+        valueCell(a.assessment_code, w[0]!), valueCell(a.visit_label, w[1]!),
+        valueCell(a.total != null ? String(a.total) : '—', w[2]!), valueCell(a.interpretation ?? '', w[3]!),
+      ] }))
+    children.push(new Table({ width: { size: 9360, type: WidthType.DXA }, columnWidths: w, rows: [head, ...rows] }))
+  }
+
   // Signatories
   const m = getStudyMeta(data.studyCode)
   children.push(signatoriesTable(m.scholar, m.supervisor))

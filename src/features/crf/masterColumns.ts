@@ -5,6 +5,7 @@
  * expand to one column per cell (row × visit).
  */
 import { CRF_REGISTRY } from './registry'
+import { assessmentsForStudy } from '../assessments/library'
 
 export interface MasterColumn {
   key: string
@@ -52,7 +53,20 @@ export function buildMasterColumns(studyCode: string): MasterColumn[] {
       cols.push({ key: f.key, label: f.label + (f.unit ? ` (${f.unit})` : ''), section: sec.title, kind, options: f.options })
     }
   }
+
+  // Assessment Engine scores (stored separately from the CRF templates).
+  for (const a of assessmentsForStudy(studyCode)) {
+    for (const v of a.visits) {
+      cols.push({ key: assessmentColumnKey(a.code, v), label: `${a.short} ${v}`, section: 'Assessment Scores', kind: 'number' })
+    }
+  }
+
   return cols
+}
+
+/** Synthetic master-chart key for an assessment score at a visit. */
+export function assessmentColumnKey(code: string, visit: string): string {
+  return `assess__${code}__${visit}`
 }
 
 /** Resolve a patient's stored value for a column to a display string. */

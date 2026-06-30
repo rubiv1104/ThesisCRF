@@ -17,6 +17,13 @@ export interface InvestigationDoc {
   created_at: string
 }
 
+export interface AssessmentRow {
+  assessment_code: string
+  visit_label: string
+  total: number | null
+  interpretation: string | null
+}
+
 export interface CrfData {
   patient: {
     id: string
@@ -31,6 +38,7 @@ export interface CrfData {
   validatedAt: string | null
   values: Record<string, string>
   investigations: InvestigationDoc[]
+  assessments: AssessmentRow[]
 }
 
 export async function loadCrfData(supabase: SupabaseLike, patientId: string): Promise<CrfData | null> {
@@ -81,6 +89,12 @@ export async function loadCrfData(supabase: SupabaseLike, patientId: string): Pr
 
   investigations = (docs as InvestigationDoc[]) ?? []
 
+  const { data: assessRaw } = await supabase
+    .from('assessment_results')
+    .select('assessment_code, visit_label, total, interpretation')
+    .eq('patient_id', patientId)
+  const assessments = (assessRaw as AssessmentRow[]) ?? []
+
   return {
     patient: {
       id: patient.id,
@@ -95,5 +109,6 @@ export async function loadCrfData(supabase: SupabaseLike, patientId: string): Pr
     validatedAt: crf?.validated_at ?? null,
     values,
     investigations,
+    assessments,
   }
 }

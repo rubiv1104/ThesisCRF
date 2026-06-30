@@ -168,6 +168,35 @@ export default async function PrintCrfPage({ params, searchParams }: PageProps) 
           </div>
         )}
 
+        {/* Assessment scores (from the Assessment Engine) */}
+        {data.assessments.length > 0 && (
+          <div className="crf-section mt-6">
+            <h2 className="mb-2 border-b border-slate-300 pb-1 text-sm font-bold text-slate-800">Assessment Scores</h2>
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-100">
+                  <th className="border border-slate-300 px-2 py-1 text-left font-medium text-slate-600">Scale</th>
+                  <th className="border border-slate-300 px-2 py-1 text-left font-medium text-slate-600">Visit</th>
+                  <th className="border border-slate-300 px-2 py-1 text-center font-medium text-slate-600">Score</th>
+                  <th className="border border-slate-300 px-2 py-1 text-left font-medium text-slate-600">Interpretation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...data.assessments]
+                  .sort((a, b) => a.assessment_code.localeCompare(b.assessment_code) || a.visit_label.localeCompare(b.visit_label))
+                  .map((a, i) => (
+                    <tr key={i}>
+                      <td className="border border-slate-300 px-2 py-1 font-medium text-slate-800">{a.assessment_code}</td>
+                      <td className="border border-slate-300 px-2 py-1 text-slate-700">{a.visit_label}</td>
+                      <td className="border border-slate-300 px-2 py-1 text-center font-semibold text-slate-900">{a.total ?? '—'}</td>
+                      <td className="border border-slate-300 px-2 py-1 text-slate-700">{a.interpretation ?? ''}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* Signatories */}
         <div className="crf-section mt-12 grid grid-cols-2 gap-8">
           <div className="text-center">

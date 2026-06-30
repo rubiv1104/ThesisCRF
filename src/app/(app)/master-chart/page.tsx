@@ -91,6 +91,18 @@ export default async function MasterChartPage({ searchParams }: PageProps) {
     if (key) uploadByName[key] = u.data ?? {}
   }
 
+  // Assessment Engine scores → injected as synthetic master-chart fields
+  const assessByPatient: Record<string, Record<string, string>> = {}
+  if (patients.length > 0) {
+    const { data: aRaw } = await supabase
+      .from('assessment_results')
+      .select('patient_id, assessment_code, visit_label, total')
+      .in('patient_id', patients.map((p: any) => p.id))
+    for (const a of (aRaw ?? []) as any[]) {
+      ;(assessByPatient[a.patient_id] ??= {})[`assess__${a.assessment_code}__${a.visit_label}`] = a.total != null ? String(a.total) : ''
+    }
+  }
+
   const rows = patients.map((p: any) => {
     const nameKey = String(p.patient_name ?? '').trim().toLowerCase()
     return {
@@ -101,7 +113,7 @@ export default async function MasterChartPage({ searchParams }: PageProps) {
       gender: p.gender,
       group: (p.research_groups as any)?.group_name ?? '—',
       crf_status: crfStatus[p.id] ?? 'pending',
-      fields: { ...(uploadByName[nameKey] ?? {}), ...(crfData[p.id] ?? {}) },
+      fields: { ...(uploadByName[nameKey] ?? {}), ...(crfData[p.id] ?? {}), ...(assessByPatient[p.id] ?? {}) },
       has_upload: !!uploadByName[nameKey],
     }
   })
