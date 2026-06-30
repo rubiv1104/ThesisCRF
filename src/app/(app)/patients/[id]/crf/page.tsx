@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CrfView } from '@/features/crf/components/CrfView'
 import { CrfStatusBanner } from '@/features/crf/components/CrfStatusBanner'
 import { InvestigationUpload } from '@/features/investigations/components/InvestigationUpload'
+import { ConsentUpload } from '@/features/investigations/components/ConsentUpload'
 import { APP_NAME } from '@/constants'
 import { Printer, FileDown } from 'lucide-react'
 import { studyTitle, studyBatch, getStudyMeta } from '@/features/crf/studyMeta'
@@ -123,6 +124,9 @@ export default async function CrfPage({ params }: PageProps) {
           CRF status: <span className="font-medium capitalize text-slate-700">{crfData.validation_status}</span>
         </div>
       )}
+
+      {/* Consent form — required before data collection */}
+      <ConsentUpload patientId={id} readOnly={isReadOnly} />
 
       {/* CRF form — locked once approved */}
       <CrfView

@@ -58,6 +58,7 @@ export function InvestigationUpload({ patientId, patientName: _patientName, read
       .from('investigation_documents')
       .select('id, file_name, file_path, file_size, visit_label, description, created_at')
       .eq('patient_id', patientId)
+      .eq('doc_type', 'investigation')
       .order('created_at', { ascending: false })
     setDocs((data as Doc[]) ?? [])
     setLoading(false)
@@ -95,6 +96,7 @@ export function InvestigationUpload({ patientId, patientName: _patientName, read
           visit_label: visitLabel,
           description: description.trim() || null,
           uploaded_by: user?.id,
+          doc_type: 'investigation',
         })
 
       if (dbError) throw dbError

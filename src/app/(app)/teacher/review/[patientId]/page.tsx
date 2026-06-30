@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CrfView } from '@/features/crf/components/CrfView'
 import { CrfReviewPanel } from '@/features/crf/components/CrfReviewPanel'
 import { InvestigationUpload } from '@/features/investigations/components/InvestigationUpload'
+import { ConsentUpload } from '@/features/investigations/components/ConsentUpload'
 import { APP_NAME } from '@/constants'
 import { ChevronLeft } from 'lucide-react'
 
@@ -87,6 +88,9 @@ export default async function TeacherCrfReviewPage({ params }: PageProps) {
           </span>
         </div>
       </div>
+
+      {/* Consent status (read-only for the guide) */}
+      <ConsentUpload patientId={patientId} readOnly />
 
       {/* CRF data — all sections expanded so guide can read everything */}
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-1">
