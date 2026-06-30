@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard,
   Users,
@@ -19,6 +19,7 @@ import {
   TableProperties,
   FileText,
 } from 'lucide-react'
+import { DEV_MODE_KEY } from '@/features/dev/DevModeToggle'
 import { cn } from '@/utils'
 import { APP_NAME } from '@/constants'
 
@@ -92,7 +93,20 @@ export function Sidebar({ open, onClose, role = 'investigator' }: SidebarProps) 
     })
   }
 
+  // Developer Mode (admin-only) reveals the Developer tools entry
+  const [devMode, setDevMode] = useState(false)
+  useEffect(() => {
+    const read = () => setDevMode(localStorage.getItem(DEV_MODE_KEY) === '1')
+    read()
+    window.addEventListener('devmode-changed', read)
+    window.addEventListener('storage', read)
+    return () => { window.removeEventListener('devmode-changed', read); window.removeEventListener('storage', read) }
+  }, [])
+
   const config = ROLE_CONFIG[role]
+  const navItems = role === 'admin' && devMode
+    ? [...config.nav, { label: 'Developer', href: '/admin/dev', icon: FlaskConical }]
+    : config.nav
 
   return (
     <>
@@ -144,7 +158,7 @@ export function Sidebar({ open, onClose, role = 'investigator' }: SidebarProps) 
 
         {/* Navigation */}
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto py-3 px-2">
-          {config.nav.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon
             const active =
               pathname === item.href ||

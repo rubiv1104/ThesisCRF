@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { APP_NAME } from '@/constants'
+import { DevModeToggle } from '@/features/dev/DevModeToggle'
 
 export const metadata = { title: `Settings | ${APP_NAME}` }
 
@@ -48,6 +49,8 @@ export default async function SettingsPage() {
           </div>
         )}
       </div>
+
+      {profile?.role === 'admin' && <DevModeToggle />}
 
       <p className="text-xs text-slate-400">
         To update your account details, contact the system administrator.
