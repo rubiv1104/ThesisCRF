@@ -3,7 +3,7 @@ import type { CrfTemplateDef } from '../types'
 export const DMA2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'DMA2026',
   version: '1.0',
-  visitSchedule: ['Baseline', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit', '7th Visit', '8th Visit', '9th Visit', '10th Visit', '11th Visit', '12th Visit'],
+  visitSchedule: ['Baseline', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit'],
   sections: [
     // 1. ENROLLMENT
     {
@@ -623,32 +623,33 @@ export const DMA2026_TEMPLATE: CrfTemplateDef = {
       ],
     },
 
-    // 12. FOLLOW-UP ASSESSMENT GRID (12 symptoms × 7 visits)
+    // 12. FOLLOW-UP ASSESSMENT GRID (12 Madhumeha symptoms × Basal + 6 visits)
     {
       key: 'followup_assessment',
       title: '12. Follow-Up Assessment (Symptom Grading)',
       fields: [
         {
           key: 'followup_grid',
-          label: 'Symptom Grades — Basal / 1st / 2nd / 3rd / 4th / 5th / 6th Visit',
+          label: 'Madhumeha Symptom Grades across visits',
           type: 'assessment_grid',
           rows: [
             'Prabhoota mootrata (Excessive Urine)',
             'Avila mootrata (Turbid Urine)',
             'Kshudhaadhikya — Polyphagia (Excessive Hunger)',
             'Pipasaadhikya — Polydipsia (Excessive Thirst)',
-            'Daurbalya / Shram (Exhaustion / Tiredness)',
+            'Mutramadhurya (Glycosuria)',
             'Suptaangta/Daha — Polyneuritis (Numbness/Burning of Soles)',
             'Pindikodveshtana (Cramps / Calf Muscle Pain)',
             'Vibandh (Constipation)',
             'Swedadikya (Excess Perspiration)',
-            'Swapnasukha',
-            'DSQ Score',
+            'Anga gandha (Bad Odour)',
+            'Nidraadhikya (Excessive Sleep)',
+            'Hasta paad tal daha',
           ],
-          columns: ['Basal', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit', '7th Visit', '8th Visit', '9th Visit', '10th Visit', '11th Visit', '12th Visit'],
+          columns: ['Basal', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit'],
         },
         { key: 'followup_total_bt', label: 'Total Score BT', type: 'number' },
-        { key: 'followup_total_at', label: 'Total Score AT (12th visit)', type: 'number' },
+        { key: 'followup_total_at', label: 'Total Score AT (6th visit)', type: 'number' },
         { key: 'result', label: 'Result', type: 'text' },
         {
           key: 'improved',
@@ -662,57 +663,12 @@ export const DMA2026_TEMPLATE: CrfTemplateDef = {
       ],
     },
 
-    // 13. DIABETES SYMPTOM QUESTIONNAIRE (DSQ) — Annexure II
-    {
-      key: 'dsq',
-      title: '13. Diabetes Symptom Questionnaire (DSQ)',
-      fields: [
-        { key: 'dsq_note', label: 'Rate each symptom 0–4 (0 = Never, 1 = A little of the time, 2 = Some of the time, 3 = Most of the time, 4 = All of the time), Before and After Treatment.', type: 'heading' },
-        {
-          key: 'dsq_grid', label: 'Diabetes Symptom Questionnaire', type: 'assessment_grid',
-          rows: [
-            'Cold hands and/or feet',
-            'An overall sense of fatigue',
-            'Sleepiness or drowsiness (during the day)',
-            'Difficulty thinking or concentrating',
-            'Irritability',
-            'Anxiety or nervousness',
-            'Blurred vision (also with glasses on)',
-            'Felt you were not thinking as quickly as usual',
-            'Dry mouth',
-            'Frequent need to urinate',
-            'Unable to stay focused',
-            'Broke out into a sweat (not exercise)',
-            'Felt unusually hungry',
-            'Felt faint, dizzy or light-headed',
-            'Shakiness or trembling',
-            'Headaches',
-            'Tingling or prickling sensations in hands or feet',
-            'Had the shivers or cold sweats',
-            'Feeling weak',
-            'Uncoordinated or clumsy',
-            'Upset stomach or nausea',
-            'Heartburn',
-            'Numbness',
-            'Cramping in legs or feet',
-            'Weight gain',
-            'Symptoms of low blood sugar',
-            'Symptoms of high blood sugar',
-            'Low blood sugars in the middle of the night',
-            'Female only: Vaginal dryness / discomfort',
-          ],
-          columns: ['BT (0-4)', 'AT (0-4)'],
-        },
-        { key: 'dsq_total_bt', label: 'DSQ Total Score – BT', type: 'number' },
-        { key: 'dsq_total_at', label: 'DSQ Total Score – AT', type: 'number' },
-      ],
-    },
-    // 14. SF-12 HEALTH SURVEY (supplementary QoL — added alongside the proforma's DSQ)
+    // 13. SF-12 HEALTH SURVEY (the QoL instrument in the final DMA proforma)
     {
       key: 'sf12',
-      title: '14. SF-12 Health Survey (Quality of Life)',
+      title: '13. SF-12 Health Survey (Quality of Life)',
       fields: [
-        { key: 'sf12_note', label: 'Supplementary QoL instrument (in addition to the DSQ). Administered at Baseline (BT) and end of treatment (AT).', type: 'heading' },
+        { key: 'sf12_note', label: 'Administered at Baseline (BT) and end of treatment (AT).', type: 'heading' },
         { key: 'sf12_q1_bt', label: 'In general, your health is (BT)', type: 'radio', options: [{ value: '1', label: '1 – Excellent' }, { value: '2', label: '2 – Very Good' }, { value: '3', label: '3 – Good' }, { value: '4', label: '4 – Fair' }, { value: '5', label: '5 – Poor' }] },
         { key: 'sf12_q1_at', label: 'In general, your health is (AT)', type: 'radio', options: [{ value: '1', label: '1 – Excellent' }, { value: '2', label: '2 – Very Good' }, { value: '3', label: '3 – Good' }, { value: '4', label: '4 – Fair' }, { value: '5', label: '5 – Poor' }] },
         { key: 'sf12_q2a_bt', label: 'Moderate activities limited (moving a table, bowling) (BT)', type: 'radio', options: [{ value: '1', label: '1 – Yes, limited a lot' }, { value: '2', label: '2 – Yes, limited a little' }, { value: '3', label: '3 – No, not limited at all' }] },
