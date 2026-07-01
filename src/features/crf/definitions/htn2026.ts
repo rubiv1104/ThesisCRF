@@ -81,45 +81,22 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
       key: 'history',
       title: '4. Chief Complaints & History',
       fields: [
-        { key: 'cc_heading', label: 'Chief Complaints (presence & duration) — symptom severity is scored in the Assessment Scales panel', type: 'heading' },
+        { key: 'cc_heading', label: 'Chief Complaints', type: 'heading' },
         {
-          key: 'cc_headache', label: 'Headache', type: 'radio',
-          options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
-        },
-        { key: 'cc_headache_duration', label: 'Headache – Duration', type: 'text', dependsOn: { key: 'cc_headache', value: 'present' } },
-        {
-          key: 'cc_palpitation', label: 'Palpitation', type: 'radio',
-          options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
-        },
-        { key: 'cc_palpitation_duration', label: 'Palpitation – Duration', type: 'text', dependsOn: { key: 'cc_palpitation', value: 'present' } },
-        {
-          key: 'cc_dizziness', label: 'Dizziness', type: 'radio',
-          options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
-        },
-        { key: 'cc_dizziness_duration', label: 'Dizziness – Duration', type: 'text', dependsOn: { key: 'cc_dizziness', value: 'present' } },
-        {
-          key: 'cc_breathlessness', label: 'Breathlessness', type: 'radio',
-          options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
-        },
-        { key: 'cc_breathlessness_duration', label: 'Breathlessness – Duration', type: 'text', dependsOn: { key: 'cc_breathlessness', value: 'present' } },
-        {
-          key: 'cc_fatigue', label: 'Fatigue', type: 'radio',
-          options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
-        },
-        { key: 'cc_fatigue_duration', label: 'Fatigue – Duration', type: 'text', dependsOn: { key: 'cc_fatigue', value: 'present' } },
-        {
-          key: 'cc_chest_pain', label: 'Chest Pain', type: 'radio',
-          options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
-        },
-        { key: 'cc_chest_pain_duration', label: 'Chest Pain – Duration', type: 'text', dependsOn: { key: 'cc_chest_pain', value: 'present' } },
-        {
-          key: 'cc_nausea', label: 'Nausea / Vomiting', type: 'radio',
-          options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
-        },
-        { key: 'cc_nausea_duration', label: 'Nausea – Duration', type: 'text', dependsOn: { key: 'cc_nausea', value: 'present' } },
-        {
-          key: 'cc_skin_colour', label: 'Pale / Red Skin', type: 'radio',
-          options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
+          key: 'chief_complaints',
+          label: 'Chief Complaints — mark Yes/No, note duration, and grade each symptom (grade range shown per symptom, as per the proforma)',
+          type: 'assessment_grid',
+          rows: [
+            'Headache (0-3)',
+            'Palpitation (0-1)',
+            'Dizziness (0-3)',
+            'Breathlessness (0-3)',
+            'Fatigue (0-1)',
+            'Chest Pain (0-3)',
+            'Nausea / Vomiting (0-3)',
+            'Pale / Red Skin (0-1)',
+          ],
+          columns: ['Yes / No', 'Duration', 'Grading'],
         },
         { key: 'hpi_heading', label: 'History of Present Illness', type: 'heading' },
         { key: 'hpi_duration', label: 'Duration of Illness', type: 'text' },
@@ -477,6 +454,8 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
         { key: 'globulin_at', label: 'S. Globulin – AT', type: 'number', unit: 'gm/dL' },
         { key: 'ag_ratio_bt', label: 'A/G Ratio – BT', type: 'number' },
         { key: 'ag_ratio_at', label: 'A/G Ratio – AT', type: 'number' },
+        { key: 'serum_bili_bt', label: 'Serum Bilirubin (Total) – BT', type: 'number', unit: 'mg/dL' },
+        { key: 'serum_bili_at', label: 'Serum Bilirubin (Total) – AT', type: 'number', unit: 'mg/dL' },
         { key: 'direct_bili_bt', label: 'Direct Bilirubin – BT', type: 'number', unit: 'mg/dL' },
         { key: 'direct_bili_at', label: 'Direct Bilirubin – AT', type: 'number', unit: 'mg/dL' },
         { key: 'indirect_bili_bt', label: 'Indirect Bilirubin – BT', type: 'number', unit: 'mg/dL' },
@@ -526,12 +505,45 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
       ],
     },
 
-    // 11. DISEASE ASSESSMENT
+    // 11. TREATMENT SCHEDULE
+    {
+      key: 'treatment_schedule',
+      title: '11. Treatment Schedule',
+      fields: [
+        { key: 'ts_group', label: 'Group', type: 'text' },
+        { key: 'ts_drug', label: 'Drug', type: 'text' },
+        { key: 'ts_dose', label: 'Dose', type: 'text' },
+      ],
+    },
+
+    // 12. DISEASE ASSESSMENT & FOLLOW-UP
     {
       key: 'disease_assessment',
-      title: '11. Disease Assessment',
+      title: '12. Disease Assessment & Follow-up',
       fields: [
-        { key: 'aha_note', label: 'AHA symptom severity is scored in the Assessment Scales panel (AHA-Symptoms) at every visit.', type: 'heading' },
+        {
+          key: 'followup_schedule',
+          label: 'Follow-up Assessment Schedule',
+          type: 'assessment_grid',
+          rows: ['Date of Assessment', 'Day of Assessment'],
+          columns: ['BT', '1st F/U', '2nd F/U', '3rd F/U', '4th F/U', '5th F/U', '6th F/U', 'AT'],
+        },
+        {
+          key: 'symptom_grades',
+          label: 'Symptom Grades — Before vs After Treatment',
+          type: 'assessment_grid',
+          rows: [
+            'Headache (0-3)',
+            'Palpitation (0-1)',
+            'Dizziness (0-3)',
+            'Breathlessness (0-3)',
+            'Fatigue (0-1)',
+            'Chest Pain (0-3)',
+            'Nausea / Vomiting (0-3)',
+            'Pale / Red Skin (0-1)',
+          ],
+          columns: ['BT', 'AT', 'Diff'],
+        },
         {
           key: 'vitals_grid',
           label: 'Vital Signs across visits',
@@ -561,44 +573,53 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
       ],
     },
 
-    // 12. CONCOMITANT / RESCUE MEDICATION
+    // 13. CONCOMITANT / RESCUE MEDICATION
     {
       key: 'concomitant_medication',
-      title: '12. Concomitant & Rescue Medication',
+      title: '13. Concomitant & Rescue Medication',
       fields: [
         {
           key: 'concomitant_needed', label: 'Need for Concomitant Medication?', type: 'radio',
           options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }],
         },
-        { key: 'concomitant_details', label: 'Concomitant Medication details (medicine, dose, duration, reason)', type: 'textarea', dependsOn: { key: 'concomitant_needed', value: 'yes' } },
+        {
+          key: 'concomitant_table', label: 'Concomitant Medication', type: 'assessment_grid',
+          rows: ['1', '2', '3'], columns: ['Medicine', 'Dose', 'Duration', 'Reason for Taking'],
+          dependsOn: { key: 'concomitant_needed', value: 'yes' },
+        },
         {
           key: 'rescue_needed', label: 'Need for Rescue Medication?', type: 'radio',
           options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }],
         },
-        { key: 'rescue_details', label: 'Rescue Medication details', type: 'textarea', dependsOn: { key: 'rescue_needed', value: 'yes' } },
+        {
+          key: 'rescue_table', label: 'Rescue Medication', type: 'assessment_grid',
+          rows: ['1', '2', '3'], columns: ['Medicine', 'Dose', 'Duration', 'Reason for Taking'],
+          dependsOn: { key: 'rescue_needed', value: 'yes' },
+        },
       ],
     },
 
-    // 13. ADVERSE DRUG REACTIONS
+    // 14. ADVERSE DRUG REACTIONS
     {
       key: 'adr',
-      title: '13. Adverse Drug Reactions / Events',
+      title: '14. Adverse Drug Reactions / Events',
       fields: [
         {
           key: 'adr_present', label: 'Any Adverse Events?', type: 'radio',
           options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }],
         },
-        { key: 'adr_date', label: 'Date', type: 'date', dependsOn: { key: 'adr_present', value: 'yes' } },
-        { key: 'adr_complaint', label: 'Complaint', type: 'textarea', dependsOn: { key: 'adr_present', value: 'yes' } },
-        { key: 'adr_treatment', label: 'Treatment Given', type: 'textarea', dependsOn: { key: 'adr_present', value: 'yes' } },
-        { key: 'adr_remarks', label: 'Remarks', type: 'textarea', dependsOn: { key: 'adr_present', value: 'yes' } },
+        {
+          key: 'adr_table', label: 'Adverse Drug Reactions / Events', type: 'assessment_grid',
+          rows: ['1', '2', '3'], columns: ['Date', 'Complaint', 'Treatment Given', 'Remarks'],
+          dependsOn: { key: 'adr_present', value: 'yes' },
+        },
       ],
     },
 
-    // 14. COMPLETION
+    // 15. COMPLETION
     {
       key: 'completion',
-      title: '14. Completion',
+      title: '15. Completion',
       fields: [
         {
           key: 'treatment_completed', label: 'Treatment', type: 'radio',
