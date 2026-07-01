@@ -3,7 +3,7 @@ import type { CrfTemplateDef } from '../types'
 export const DMA2026_TEMPLATE: CrfTemplateDef = {
   study_code: 'DMA2026',
   version: '1.0',
-  visitSchedule: ['Day 0 (Basal)', 'Day 14 (1st Visit)', 'Day 28 (2nd Visit)', 'Day 42 (3rd Visit)', 'Day 56 (4th Visit)', 'Day 70 (5th Visit)', 'Day 84 (6th Visit / AT)'],
+  visitSchedule: ['Baseline', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit', '7th Visit', '8th Visit', '9th Visit', '10th Visit', '11th Visit', '12th Visit'],
   sections: [
     // 1. ENROLLMENT
     {
@@ -645,10 +645,10 @@ export const DMA2026_TEMPLATE: CrfTemplateDef = {
             'Swapnasukha',
             'DSQ Score',
           ],
-          columns: ['Basal', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit'],
+          columns: ['Basal', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit', '7th Visit', '8th Visit', '9th Visit', '10th Visit', '11th Visit', '12th Visit'],
         },
         { key: 'followup_total_bt', label: 'Total Score BT', type: 'number' },
-        { key: 'followup_total_at', label: 'Total Score AT (6th visit)', type: 'number' },
+        { key: 'followup_total_at', label: 'Total Score AT (12th visit)', type: 'number' },
         { key: 'result', label: 'Result', type: 'text' },
         {
           key: 'improved',
