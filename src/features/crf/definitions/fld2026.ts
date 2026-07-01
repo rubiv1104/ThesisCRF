@@ -615,7 +615,6 @@ export const FLD2026_TEMPLATE: CrfTemplateDef = {
         { key: 'usg_heading', label: 'Ultrasonography (Whole Abdomen)', type: 'heading' },
         { key: 'usg_bt', label: 'USG — BT Findings', type: 'textarea' },
         { key: 'usg_at', label: 'USG — AT Findings', type: 'textarea' },
-        { key: 'fibroscan_note', label: 'FibroScan (LSM/CAP → fibrosis/steatosis) is recorded in the Assessment Scales panel.', type: 'heading' },
         { key: 'hae_heading', label: 'Haematology', type: 'heading' },
         { key: 'hb_bt', label: 'Haemoglobin BT (g/dL)', type: 'number' },
         { key: 'hb_at', label: 'Haemoglobin AT (g/dL)', type: 'number' },
@@ -724,7 +723,7 @@ export const FLD2026_TEMPLATE: CrfTemplateDef = {
     // 12. ADVERSE EVENTS & TREATMENT COMPLETION
     {
       key: 'adverse_completion',
-      title: '12. Adverse Events & Treatment Completion',
+      title: '11. Adverse Events & Treatment Completion',
       fields: [
         { key: 'pathya_apathya', label: 'Pathya-Apathya (Dietary Advice Given)', type: 'textarea' },
         {

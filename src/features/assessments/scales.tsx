@@ -240,7 +240,8 @@ export const EXTRA_SCALES: AssessmentDef[] = [
   },
   {
     code: 'FibroScan', name: 'FibroScan (Transient Elastography)', short: 'FibroScan', category: 'Investigation',
-    studies: ['FLD2026'], visits: ['BT', 'AT'], range: 'kPa',
+    // Retired: the IEC removed FibroScan from FLD2026's investigations (proforma correction log).
+    studies: [], visits: ['BT', 'AT'], range: 'kPa',
     score: fibroScore, Workspace: fibroWorkspace,
     interpret: (t) => t === 0 ? '—' : `Fibrosis ${fibroStage(t)}`,
   },
