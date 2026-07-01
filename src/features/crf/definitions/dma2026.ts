@@ -284,7 +284,7 @@ export const DMA2026_TEMPLATE: CrfTemplateDef = {
         },
         { key: 'height', label: 'Height (m)', type: 'number' },
         { key: 'weight', label: 'Weight (kg)', type: 'number' },
-        { key: 'bmi', label: 'BMI (Kg/m²)', type: 'number' },
+        { key: 'bmi', label: 'BMI (Kg/m²)', type: 'calculated', formulaId: 'bmi', hint: 'Auto-calculated from height & weight' },
         { key: 'waist_circumference', label: 'Waist Circumference (cm)', type: 'number' },
         { key: 'rr', label: 'Respiratory Rate (/min)', type: 'number' },
         { key: 'pr', label: 'Pulse Rate (/min)', type: 'number' },

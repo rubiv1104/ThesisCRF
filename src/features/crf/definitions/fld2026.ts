@@ -576,7 +576,7 @@ export const FLD2026_TEMPLATE: CrfTemplateDef = {
       fields: [
         {
           key: 'symptoms_grid',
-          label: 'Symptoms — Day 1 (BT) / After 45 Days / After 90 Days (AT)',
+          label: 'Symptoms (Present = 1 / Absent = 0) — Before & After Treatment',
           type: 'assessment_grid',
           rows: [
             '1. Daurbalya (Debility)',
@@ -602,7 +602,7 @@ export const FLD2026_TEMPLATE: CrfTemplateDef = {
             '21. Nila Hareet Haaridra Raji (Stretch Marks — Bluish/Greenish/Yellowish)',
             '22. Aati Pandu (Anaemia)',
           ],
-          columns: ['Day 1 (BT)', 'After 45 Days', 'After 90 Days (AT)'],
+          columns: ['BT', 'AT'],
         },
       ],
     },

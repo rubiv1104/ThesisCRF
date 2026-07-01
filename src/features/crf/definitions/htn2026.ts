@@ -246,7 +246,7 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
         },
         { key: 'height', label: 'Height', type: 'number', unit: 'm' },
         { key: 'weight', label: 'Weight', type: 'number', unit: 'kg' },
-        { key: 'bmi', label: 'BMI', type: 'number', unit: 'kg/m²' },
+        { key: 'bmi', label: 'BMI', type: 'calculated', formulaId: 'bmi', hint: 'Auto-calculated from height & weight' },
         {
           key: 'clubbing', label: 'Clubbing', type: 'radio',
           options: [{ value: 'present', label: 'Present' }, { value: 'absent', label: 'Absent' }],
