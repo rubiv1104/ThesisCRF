@@ -228,7 +228,8 @@ export const EXTRA_SCALES: AssessmentDef[] = [
   },
   {
     code: 'SF-12', name: 'SF-12 Health Survey', short: 'SF-12', category: 'Quality of Life',
-    studies: ['DM2026', 'DMA2026'], visits: ['BT', 'AT'], range: '0–100',
+    // DMA2026 uses the Diabetes Symptom Questionnaire (DSQ) per its proforma, not SF-12.
+    studies: ['DM2026'], visits: ['BT', 'AT'], range: '0–100',
     score: sf12Score, Workspace: makeWorkspace(SF12_ITEMS),
     interpret: (t) => t >= 60 ? 'Good QoL' : t >= 40 ? 'Moderate QoL' : 'Poor QoL',
   },
