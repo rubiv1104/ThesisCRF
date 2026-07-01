@@ -12,9 +12,8 @@ export const ECZ2026_TEMPLATE: CrfTemplateDef = {
       title: 'Study Information',
       fields: [
         { key: 'centre', label: 'Centre', type: 'text', required: true },
-        { key: 'study_duration_days', label: 'Duration of Study (days)', type: 'number', required: true, placeholder: 'e.g. 90' },
         { key: 'date_induction', label: 'Date of Induction into Study', type: 'date', required: true },
-        { key: 'date_expected_completion', label: 'Expected Date of Completion', type: 'calculated', formulaId: 'date_plus_days', hint: 'Auto-filled: Date of Induction + Duration of Study' },
+        { key: 'date_expected_completion', label: 'Expected Date of Completion', type: 'calculated', formulaId: 'date_plus_days', formulaDays: 90, hint: 'Auto-filled: Date of Induction + 90 days' },
         { key: 'cr_no', label: 'CR No.', type: 'text' },
         { key: 'opd_no', label: 'OPD No.', type: 'text' },
         { key: 'iec_number', label: 'IEC Number', type: 'text', defaultValue: 'F-5(423)/2020-Co/IEC(Ayurveda)/143' },
@@ -189,7 +188,6 @@ export const ECZ2026_TEMPLATE: CrfTemplateDef = {
             { value: '4', label: 'Other' },
           ],
         },
-        { key: 'dob', label: 'Date of Birth', type: 'date' },
         { key: 'address', label: 'Address', type: 'textarea' },
       ],
     },

@@ -17,7 +17,6 @@ export const DMA2026_TEMPLATE: CrfTemplateDef = {
         { key: 'gender', label: 'Gender', type: 'radio', options: [{ value: '1', label: 'Male' }, { value: '2', label: 'Female' }] },
         { key: 'age_years', label: 'Age (years)', type: 'number' },
         { key: 'age_months', label: 'Age (months)', type: 'number' },
-        { key: 'dob', label: 'Date of Birth', type: 'date' },
         { key: 'address', label: 'Address', type: 'textarea' },
         { key: 'telephone', label: 'Telephone No.', type: 'text' },
       ],

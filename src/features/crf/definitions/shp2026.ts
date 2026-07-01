@@ -120,7 +120,6 @@ export const SHP2026_TEMPLATE: CrfTemplateDef = {
           key: 'habitat', label: 'Habitat', type: 'radio',
           options: [{ value: 'urban', label: 'Urban' }, { value: 'semi_urban', label: 'Semi-Urban' }, { value: 'rural', label: 'Rural' }],
         },
-        { key: 'dob', label: 'Date of Birth', type: 'date' },
         { key: 'address', label: 'Address', type: 'textarea' },
       ],
     },

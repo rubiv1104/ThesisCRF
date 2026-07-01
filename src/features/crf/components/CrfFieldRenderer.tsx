@@ -102,10 +102,13 @@ function computeCalcValue(field: CrfField, allValues: Record<string, string>): n
   }
 
   if (field.formulaId === 'bmi') {
-    const h = parseFloat(allValues['height'] ?? '')
+    let h = parseFloat(allValues['height'] ?? '')
     const w = parseFloat(allValues['weight'] ?? '')
     if (!h || !w || isNaN(h) || isNaN(w)) return null
-    const hm = h / 100 // height entered in cm, convert to m
+    // Templates differ: some capture height in cm, some in metres. Normalise so
+    // BMI computes correctly either way (a value under 3 is treated as metres).
+    if (h < 3) h = h * 100
+    const hm = h / 100 // now in cm → convert to metres
     return Math.round((w / (hm * hm)) * 10) / 10
   }
 

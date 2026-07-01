@@ -154,7 +154,6 @@ export const AST2026_TEMPLATE: CrfTemplateDef = {
             { value: 'rural', label: 'Rural' },
           ],
         },
-        { key: 'dob', label: 'Date of Birth', type: 'date' },
         { key: 'address', label: 'Address', type: 'textarea' },
       ],
     },

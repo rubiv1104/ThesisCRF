@@ -29,7 +29,6 @@ export const HTN2026_TEMPLATE: CrfTemplateDef = {
       fields: [
         { key: 'cr_no', label: 'CR No.', type: 'text' },
         { key: 'opd_no', label: 'OPD No.', type: 'text' },
-        { key: 'dob', label: 'Date of Birth', type: 'date' },
         { key: 'address', label: 'Address', type: 'textarea' },
         { key: 'phone_residence', label: 'Phone – Residence', type: 'text' },
         { key: 'phone_mobile', label: 'Mobile', type: 'text' },

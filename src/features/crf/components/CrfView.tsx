@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { CRF_REGISTRY } from '../registry'
-import { expectedSlots } from '../studyMeta'
+import { expectedSlots, getStudyMeta } from '../studyMeta'
 import { missingRequiredBySection } from '../validateCrf'
 import { CrfSectionAccordion } from './CrfSectionAccordion'
 import { SaveIndicator } from './SaveIndicator'
@@ -230,14 +230,23 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         // Apply defaultValues for any field not yet saved — collected and written
         // as a SINGLE batch upsert (not one round-trip per field).
         if (template) {
+          // Study-level constants (approved IEC/CTRI numbers) auto-fill their CRF
+          // fields from the single source of truth in studyMeta, so they are never
+          // re-typed and stay consistent across every patient in the study.
+          const sm = getStudyMeta(studyCode)
+          const META_DEFAULTS: Record<string, string | undefined> = {
+            iec_number: sm.iec || undefined,
+            ctri_number: sm.ctri || undefined,
+          }
           const defaults: PendingRow[] = []
           for (const section of template.sections) {
             const meta = sectionMeta.find((s) => s.section_key === section.key)
             if (!meta) continue
             for (const field of section.fields) {
-              if (field.defaultValue && !loaded[field.key]) {
-                loaded[field.key] = field.defaultValue
-                defaults.push({ section_id: meta.id, field_key: field.key, field_label: field.label, field_type: field.type, response: field.defaultValue, visit_number: 0 })
+              const dv = field.defaultValue ?? META_DEFAULTS[field.key]
+              if (dv && !loaded[field.key]) {
+                loaded[field.key] = dv
+                defaults.push({ section_id: meta.id, field_key: field.key, field_label: field.label, field_type: field.type, response: dv, visit_number: 0 })
               }
             }
           }

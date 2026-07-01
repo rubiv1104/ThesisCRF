@@ -159,7 +159,6 @@ export const DM2026_TEMPLATE: CrfTemplateDef = {
           key: 'habitat', label: 'Habitat', type: 'radio',
           options: [{ value: 'urban', label: 'Urban' }, { value: 'semi_urban', label: 'Semi-Urban' }, { value: 'rural', label: 'Rural' }],
         },
-        { key: 'dob', label: 'Date of Birth', type: 'date' },
         { key: 'duration_dm', label: 'Duration of DM', type: 'text', placeholder: 'e.g. 3 years, 6 months' },
         { key: 'address', label: 'Address', type: 'textarea' },
       ],
