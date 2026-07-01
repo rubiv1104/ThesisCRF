@@ -6,7 +6,7 @@ import { studyTitle } from '@/features/crf/studyMeta'
 import { getViewer } from '@/lib/viewer'
 import { loadGuideHome } from '@/features/guide/loadGuideHome'
 import { GuidePatients } from './GuidePatients'
-import { Bell, ClipboardCheck, AlertTriangle, CheckCircle2, Clock, FolderOpen, Users } from 'lucide-react'
+import { Bell, ClipboardCheck, AlertTriangle, CheckCircle2, Clock, FolderOpen, Users, ChevronDown } from 'lucide-react'
 
 export const metadata = { title: `Guide Dashboard | ${APP_NAME}` }
 
@@ -44,30 +44,52 @@ export default async function TeacherDashboardPage() {
         </Link>
       </div>
 
-      {/* 6 metrics */}
-      <div className="grid grid-cols-3 gap-2.5 sm:gap-3 lg:grid-cols-6">
+      {/* Compact metric strip — at-a-glance, doesn't dominate the screen */}
+      <div className="grid grid-cols-3 gap-2 lg:grid-cols-6">
         {metrics.map((m) => {
           const Icon = m.icon
-          const inner = (
-            <>
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{m.label}</p>
-                <Icon size={14} className="text-slate-300" />
-              </div>
-              <p className={`mt-1 text-2xl font-bold ${m.color}`}>{m.value}</p>
-            </>
-          )
+          const dim = m.value === 0
           return (
-            <div key={m.label} className={`rounded-xl border border-slate-200 bg-white p-3 shadow-sm ring-1 ${m.ring}`}>{inner}</div>
+            <div key={m.label} className={`rounded-lg border border-slate-200 bg-white px-2.5 py-2 ${dim ? '' : `ring-1 ${m.ring}`}`}>
+              <div className="flex items-center gap-1.5">
+                <Icon size={12} className="shrink-0 text-slate-300" />
+                <p className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">{m.label}</p>
+              </div>
+              <p className={`mt-0.5 text-lg font-bold leading-none ${dim ? 'text-slate-300' : m.color}`}>{m.value}</p>
+            </div>
           )
         })}
       </div>
 
-      {/* My Studies */}
+      {/* Working patient list — the guide's primary task, kept at the top */}
+      <div id="patients">
+        {patients.length === 0 ? (
+          <div className="rounded-xl border-2 border-dashed border-slate-200 py-16 text-center">
+            {counts.studies === 0 ? (
+              <>
+                <p className="text-sm font-medium text-slate-600">You are not assigned to any study yet.</p>
+                <p className="mt-1 text-xs text-slate-400">Ask the administrator to assign you via Admin → Users.</p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-500">No patients enrolled in your supervised studies yet.</p>
+            )}
+          </div>
+        ) : (
+          <>
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Patients by Investigator</h2>
+            <GuidePatients patients={patients} />
+          </>
+        )}
+      </div>
+
+      {/* My Studies — reference, below the working list */}
       {studies.length > 0 && (
-        <div>
-          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">My Studies</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <details className="group rounded-xl border border-slate-200 bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">My Studies ({studies.length})</h2>
+            <ChevronDown size={16} className="text-slate-400 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="grid grid-cols-1 gap-3 border-t border-slate-100 p-4 sm:grid-cols-2">
             {studies.map((s) => {
               const pct = s.sampleSize && s.sampleSize > 0 ? Math.min(100, Math.round((s.enrolled / s.sampleSize) * 100)) : 0
               return (
@@ -95,29 +117,8 @@ export default async function TeacherDashboardPage() {
               )
             })}
           </div>
-        </div>
+        </details>
       )}
-
-      {/* Working patient list */}
-      <div id="patients">
-        {patients.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-slate-200 py-16 text-center">
-            {counts.studies === 0 ? (
-              <>
-                <p className="text-sm font-medium text-slate-600">You are not assigned to any study yet.</p>
-                <p className="mt-1 text-xs text-slate-400">Ask the administrator to assign you via Admin → Users.</p>
-              </>
-            ) : (
-              <p className="text-sm text-slate-500">No patients enrolled in your supervised studies yet.</p>
-            )}
-          </div>
-        ) : (
-          <>
-            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Patients by Investigator</h2>
-            <GuidePatients patients={patients} />
-          </>
-        )}
-      </div>
     </div>
   )
 }
