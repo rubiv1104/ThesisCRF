@@ -18,6 +18,7 @@ export const HYP2026_TEMPLATE: CrfTemplateDef = {
         { key: 'centre', label: 'Centre', type: 'text', required: true },
         { key: 'cr_no', label: 'CR No.', type: 'text' },
         { key: 'opd_no', label: 'OPD No.', type: 'text' },
+        { key: 'address', label: 'Address', type: 'textarea' },
         { key: 'phone', label: 'Telephone No.', type: 'text' },
         { key: 'iec_number', label: 'IEC Number', type: 'text' },
         { key: 'ctri_number', label: 'CTRI Number', type: 'text' },
@@ -72,13 +73,9 @@ export const HYP2026_TEMPLATE: CrfTemplateDef = {
       key: 'investigations',
       title: '3. Laboratory Investigations',
       fields: [
-        { key: 'inv_thyroid_heading', label: 'Thyroid Function Tests', type: 'heading' },
+        { key: 'inv_thyroid_heading', label: 'Serum TSH', type: 'heading' },
         { key: 'tsh_bt', label: 'Serum TSH – BT', type: 'number', unit: 'mIU/L', hint: 'Must be ≥4.5 and <10 mIU/L for inclusion' },
-        { key: 't3_bt', label: 'Serum T3 – BT', type: 'number', unit: 'ng/dL' },
-        { key: 't4_bt', label: 'Serum T4 – BT', type: 'number', unit: 'μg/dL' },
         { key: 'tsh_at', label: 'Serum TSH – AT', type: 'number', unit: 'mIU/L' },
-        { key: 't3_at', label: 'Serum T3 – AT', type: 'number', unit: 'ng/dL' },
-        { key: 't4_at', label: 'Serum T4 – AT', type: 'number', unit: 'μg/dL' },
 
         { key: 'inv_haem_heading', label: 'Haematology', type: 'heading' },
         { key: 'hb_bt', label: 'Haemoglobin – BT', type: 'number', unit: 'gm/dL' },
@@ -148,9 +145,10 @@ export const HYP2026_TEMPLATE: CrfTemplateDef = {
 
         { key: 'inv_bmi_heading', label: 'BMI Assessment', type: 'heading' },
         { key: 'height_bt', label: 'Height – BT', type: 'number', unit: 'm' },
+        { key: 'height_at', label: 'Height – AT', type: 'number', unit: 'm' },
         { key: 'weight_bt', label: 'Weight – BT', type: 'number', unit: 'kg' },
-        { key: 'bmi_bt', label: 'BMI – BT', type: 'number', unit: 'kg/m²' },
         { key: 'weight_at', label: 'Weight – AT', type: 'number', unit: 'kg' },
+        { key: 'bmi_bt', label: 'BMI – BT', type: 'number', unit: 'kg/m²' },
         { key: 'bmi_at', label: 'BMI – AT', type: 'number', unit: 'kg/m²' },
       ],
     },
@@ -199,12 +197,15 @@ export const HYP2026_TEMPLATE: CrfTemplateDef = {
           options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }],
         },
         { key: 'past_history_details', label: 'Medical / Surgical history details', type: 'textarea', dependsOn: { key: 'past_history_yn', value: 'yes' } },
-        { key: 'family_history_dm', label: 'Family History – DM', type: 'textarea', placeholder: 'Mother / Father / Sibling' },
-        { key: 'family_history_htn', label: 'Family History – HTN', type: 'textarea' },
-        { key: 'family_history_cad', label: 'Family History – CAD', type: 'textarea' },
+        {
+          key: 'family_history_grid', label: 'Family History', type: 'assessment_grid',
+          rows: ['Mother', 'Father', 'Sibling'], columns: ['DM', 'HTN', 'CAD'],
+        },
         { key: 'gynaecological_history', label: 'Gynaecological & Obstetric History', type: 'textarea' },
         { key: 'lmp', label: 'LMP', type: 'date' },
         { key: 'live_children', label: 'Number of Live Children', type: 'number' },
+        { key: 'live_children_sons', label: 'Son(s)', type: 'number' },
+        { key: 'live_children_daughters', label: 'Daughter(s)', type: 'number' },
         { key: 'surgical_history', label: 'Surgical History', type: 'textarea' },
       ],
     },
@@ -322,15 +323,7 @@ export const HYP2026_TEMPLATE: CrfTemplateDef = {
           dependsOn: { key: 'oedema', value: 'present' },
         },
         { key: 'oedema_site', label: 'Oedema Site', type: 'text', dependsOn: { key: 'oedema', value: 'present' } },
-        { key: 'thyroid_exam', label: 'Thyroid Gland Examination', type: 'textarea', placeholder: 'Size, consistency, tenderness, bruit' },
-        {
-          key: 'skin_changes', label: 'Skin Changes (Hypothyroidism-specific)', type: 'checkbox_group',
-          options: [
-            { value: 'dry_skin', label: 'Dry skin' }, { value: 'coarse_skin', label: 'Coarse skin' },
-            { value: 'periorbital_puffiness', label: 'Periorbital puffiness' },
-            { value: 'pallor_skin', label: 'Pallor/yellowish tinge' }, { value: 'none', label: 'None' },
-          ],
-        },
+        { key: 'any_other', label: 'Any Other', type: 'textarea' },
       ],
     },
 
@@ -353,6 +346,11 @@ export const HYP2026_TEMPLATE: CrfTemplateDef = {
       key: 'disease_assessment',
       title: '9. Disease Assessment',
       fields: [
+        {
+          key: 'followup_dates', label: 'Follow-up — Date of Assessment', type: 'assessment_grid',
+          rows: ['Date of Assessment'],
+          columns: ['Basal', '1st Visit', '2nd Visit', '3rd Visit', '4th Visit', '5th Visit', '6th Visit'],
+        },
         {
           key: 'symptom_grid',
           label: 'Symptom Grading across visits (0=Absent, 1=Mild, 2=Moderate, 3=Severe)',
@@ -549,12 +547,20 @@ export const HYP2026_TEMPLATE: CrfTemplateDef = {
           key: 'concomitant_needed', label: 'Need for Concomitant Medication?', type: 'radio',
           options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }],
         },
-        { key: 'concomitant_details', label: 'Details (medicine, dose, duration, reason)', type: 'textarea', dependsOn: { key: 'concomitant_needed', value: 'yes' } },
+        {
+          key: 'concomitant_table', label: 'Concomitant Medication', type: 'assessment_grid',
+          rows: ['1', '2', '3'], columns: ['Medicine', 'Dose', 'Duration', 'Reason for Taking'],
+          dependsOn: { key: 'concomitant_needed', value: 'yes' },
+        },
         {
           key: 'rescue_needed', label: 'Need for Rescue Medication?', type: 'radio',
           options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }],
         },
-        { key: 'rescue_details', label: 'Rescue Medication details', type: 'textarea', dependsOn: { key: 'rescue_needed', value: 'yes' } },
+        {
+          key: 'rescue_table', label: 'Rescue Medication', type: 'assessment_grid',
+          rows: ['1', '2', '3'], columns: ['Medicine', 'Dose', 'Duration', 'Reason for Taking'],
+          dependsOn: { key: 'rescue_needed', value: 'yes' },
+        },
       ],
     },
 
@@ -567,10 +573,11 @@ export const HYP2026_TEMPLATE: CrfTemplateDef = {
           key: 'adr_present', label: 'Any adverse effects / complaints?', type: 'radio',
           options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }],
         },
-        { key: 'adr_date', label: 'Date', type: 'date', dependsOn: { key: 'adr_present', value: 'yes' } },
-        { key: 'adr_complaint', label: 'Complaint', type: 'textarea', dependsOn: { key: 'adr_present', value: 'yes' } },
-        { key: 'adr_treatment', label: 'Treatment Given', type: 'textarea', dependsOn: { key: 'adr_present', value: 'yes' } },
-        { key: 'adr_remarks', label: 'Remarks', type: 'textarea', dependsOn: { key: 'adr_present', value: 'yes' } },
+        {
+          key: 'adr_table', label: 'Adverse Drug Reactions / Events', type: 'assessment_grid',
+          rows: ['1', '2', '3'], columns: ['Date', 'Complaint', 'Treatment Given', 'Remarks'],
+          dependsOn: { key: 'adr_present', value: 'yes' },
+        },
       ],
     },
 
