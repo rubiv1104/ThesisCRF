@@ -23,7 +23,7 @@ export function AssessmentsPanel({ patientId, studyCode, readOnly = false }: { p
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {defs.map((def) => (
-          <AssessmentCard key={def.code} patientId={patientId} def={def} readOnly={readOnly} />
+          <AssessmentCard key={def.code} patientId={patientId} studyCode={studyCode} def={def} readOnly={readOnly} />
         ))}
       </div>
     </div>

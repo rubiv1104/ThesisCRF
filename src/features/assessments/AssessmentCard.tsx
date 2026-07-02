@@ -5,10 +5,11 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { X, Loader2, ClipboardList } from 'lucide-react'
 import { type AssessmentDef, type Responses, useScore } from './library'
+import { syncAssessmentToCrf } from './crfSync'
 
 interface Result { responses: Responses; total: number | null; interpretation: string | null }
 
-export function AssessmentCard({ patientId, def, readOnly = false }: { patientId: string; def: AssessmentDef; readOnly?: boolean }) {
+export function AssessmentCard({ patientId, studyCode, def, readOnly = false }: { patientId: string; studyCode: string; def: AssessmentDef; readOnly?: boolean }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
   const [byVisit, setByVisit] = useState<Record<string, Result>>({})
@@ -52,7 +53,14 @@ export function AssessmentCard({ patientId, def, readOnly = false }: { patientId
     }, { onConflict: 'patient_id,assessment_code,visit_label' })
     setSaving(false)
     if (error) { toast.error('Save failed: ' + error.message); return }
-    toast.success(`${def.short} ${editing.visit} saved — ${total} (${interpretation})`)
+    // Fill the proforma's own score cell(s) in the CRF automatically
+    const synced = await syncAssessmentToCrf(supabase, {
+      patientId, studyCode, assessmentCode: def.code, visit: editing.visit, total,
+    })
+    toast.success(
+      `${def.short} ${editing.visit} saved — ${total} (${interpretation})` +
+      (synced.length > 0 ? ' · filled into CRF' : '')
+    )
     setEditing(null)
     await load()
   }

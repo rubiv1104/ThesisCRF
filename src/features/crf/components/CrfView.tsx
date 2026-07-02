@@ -104,6 +104,22 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
     setViewMode(m)
     try { localStorage.setItem('crf_view_mode', m) } catch { /* ignore */ }
   }
+
+  // Assessment calculators write their totals into CRF score cells (already
+  // persisted by crfSync) — reflect them here without marking anything unsaved.
+  useEffect(() => {
+    function onExternal(e: Event) {
+      const detail = (e as CustomEvent<{ key: string; value: string }[]>).detail
+      if (!Array.isArray(detail) || detail.length === 0) return
+      setValues((prev) => {
+        const next = { ...prev }
+        for (const { key, value } of detail) next[key] = value
+        return next
+      })
+    }
+    window.addEventListener('crf-external-update', onExternal)
+    return () => window.removeEventListener('crf-external-update', onExternal)
+  }, [])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
 
