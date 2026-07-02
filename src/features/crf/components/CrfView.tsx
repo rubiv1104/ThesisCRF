@@ -7,6 +7,7 @@ import { CRF_REGISTRY } from '../registry'
 import { expectedSlots, getStudyMeta } from '../studyMeta'
 import { missingRequiredBySection } from '../validateCrf'
 import { CrfSectionAccordion } from './CrfSectionAccordion'
+import { CrfProformaView } from './CrfProformaView'
 import { SaveIndicator } from './SaveIndicator'
 import type { SaveStatus } from '../hooks/useCrfResponses'
 
@@ -94,6 +95,15 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
   const [loading, setLoading] = useState(!previewMode)
   const [suggestions, setSuggestions] = useState<Record<string, string>>({})
   const [visitId, setVisitId] = useState<VisitId>((previewMode || readOnly) ? 'all' : 'day0')
+  const [viewMode, setViewMode] = useState<'form' | 'proforma'>('form')
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('crf_view_mode') : null
+    if (saved === 'proforma' || saved === 'form') setViewMode(saved)
+  }, [])
+  function chooseViewMode(m: 'form' | 'proforma') {
+    setViewMode(m)
+    try { localStorage.setItem('crf_view_mode', m) } catch { /* ignore */ }
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
 
@@ -404,23 +414,41 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
             )}
           </div>
         </div>
-        {!readOnly && (
-          <div className="flex items-center gap-2">
-            <SaveIndicator status={saveStatus} />
+        <div className="flex items-center gap-2">
+          {/* View toggle: fast Form vs document-faithful Proforma */}
+          <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs font-medium">
             <button
-              onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); flushPending() }}
-              disabled={saveStatus !== 'unsaved'}
-              title={saveStatus === 'unsaved' ? 'Save your changes now' : 'All changes saved automatically'}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                saveStatus === 'unsaved'
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-slate-100 text-slate-400 cursor-default'
-              }`}
+              onClick={() => chooseViewMode('form')}
+              className={`rounded-md px-2.5 py-1 transition-colors ${viewMode === 'form' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'unsaved' ? 'Save' : 'Saved'}
+              Form
+            </button>
+            <button
+              onClick={() => chooseViewMode('proforma')}
+              title="Document view — mirrors the original proforma layout"
+              className={`rounded-md px-2.5 py-1 transition-colors ${viewMode === 'proforma' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              Proforma
             </button>
           </div>
-        )}
+          {!readOnly && (
+            <>
+              <SaveIndicator status={saveStatus} />
+              <button
+                onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); flushPending() }}
+                disabled={saveStatus !== 'unsaved'}
+                title={saveStatus === 'unsaved' ? 'Save your changes now' : 'All changes saved automatically'}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  saveStatus === 'unsaved'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-slate-100 text-slate-400 cursor-default'
+                }`}
+              >
+                {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'unsaved' ? 'Save' : 'Saved'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Visit selector — ECZ2026 gets day-specific tabs; other studies show their actual schedule */}
@@ -460,18 +488,30 @@ export function CrfView({ patientId, studyCode, readOnly = false, excelData = {}
         </div>
       )}
 
-      <CrfSectionAccordion
-        key={visitId}
-        sections={template.sections}
-        values={values}
-        onChange={onChange}
-        completedSections={completedSections}
-        suggestions={suggestions}
-        visitSectionKeys={visitSectionKeys}
-        fieldFilter={fieldFilter}
-        openAll={readOnly}
-        requiredMissing={requiredMissing}
-      />
+      {viewMode === 'proforma' ? (
+        <CrfProformaView
+          key={visitId}
+          sections={template.sections}
+          values={values}
+          onChange={onChange}
+          visitSectionKeys={visitSectionKeys}
+          fieldFilter={fieldFilter}
+          readOnly={readOnly}
+        />
+      ) : (
+        <CrfSectionAccordion
+          key={visitId}
+          sections={template.sections}
+          values={values}
+          onChange={onChange}
+          completedSections={completedSections}
+          suggestions={suggestions}
+          visitSectionKeys={visitSectionKeys}
+          fieldFilter={fieldFilter}
+          openAll={readOnly}
+          requiredMissing={requiredMissing}
+        />
+      )}
 
       {/* Floating save — stays reachable on long CRFs (header Save scrolls away) */}
       {!readOnly && saveStatus !== 'idle' && (

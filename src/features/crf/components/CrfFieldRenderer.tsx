@@ -80,7 +80,7 @@ function handleGridKey(e: React.KeyboardEvent<HTMLInputElement>, gridKey: string
   }
 }
 
-function computeCalcDate(field: CrfField, allValues: Record<string, string>): string | null {
+export function computeCalcDate(field: CrfField, allValues: Record<string, string>): string | null {
   if (field.formulaId === 'date_plus_days') {
     const raw = allValues['date_induction'] ?? ''
     const days = parseInt(allValues['study_duration_days'] ?? '') || field.formulaDays
@@ -93,7 +93,7 @@ function computeCalcDate(field: CrfField, allValues: Record<string, string>): st
   return null
 }
 
-function computeCalcValue(field: CrfField, allValues: Record<string, string>): number | null {
+export function computeCalcValue(field: CrfField, allValues: Record<string, string>): number | null {
   if (field.sumKeys) {
     const keys: string[] = field.sumKeys
     const vals = keys.map((k) => parseFloat(allValues[k] ?? '') || 0)
